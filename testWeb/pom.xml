@@ -1,0 +1,79 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.hand.testweb</groupId>
+  <artifactId>testWeb</artifactId>
+  <packaging>war</packaging>
+  <version>1.0-SNAPSHOT</version>
+  <name>testWeb Maven Webapp</name>
+  <url>http://maven.apache.org</url>
+  <dependencies>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>3.8.1</version>
+      <scope>test</scope>
+    </dependency>
+    
+    
+    <!--mysql-jdbc -->
+		<!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.38</version>
+		</dependency>
+    
+ 
+		
+		<!-- https://mvnrepository.com/artifact/org.eclipse.jetty/jetty-server -->
+<dependency>
+    <groupId>org.eclipse.jetty</groupId>
+    <artifactId>jetty-server</artifactId>
+    <version>8.1.14.v20131031</version>
+</dependency>
+		
+    <dependency>
+    <groupId>org.webjars.bower</groupId>
+    <artifactId>jquery</artifactId>
+    <version>1.7.2</version>
+</dependency>
+    
+   
+    <dependency>
+    <groupId>javax.servlet</groupId>
+    <artifactId>servlet-api</artifactId>
+    <version>2.5</version>
+</dependency>
+    
+   
+    <dependency>
+    <groupId>javax.el</groupId>
+    <artifactId>javax.el-api</artifactId>
+    <version>3.0.0</version>
+</dependency>
+    
+    
+  </dependencies>
+  <build>
+    <finalName>testWeb</finalName>
+    <plugins>  
+        <!-- jetty插件 -->  
+        <plugin>  
+            <groupId>org.mortbay.jetty</groupId>  
+            <artifactId>maven-jetty-plugin</artifactId>  
+            <version>6.1.5</version>  
+            <configuration>  
+                <webAppSourceDirectory>src/main/webapp</webAppSourceDirectory>  
+                <scanIntervalSeconds>3</scanIntervalSeconds>  
+                <contextPath>/testWeb</contextPath>  
+                <connectors>  
+                    <connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">  
+                        <port>8088</port>  
+                    </connector>  
+                </connectors>  
+            </configuration>  
+        </plugin>  
+</plugins>  
+  </build>
+</project>
