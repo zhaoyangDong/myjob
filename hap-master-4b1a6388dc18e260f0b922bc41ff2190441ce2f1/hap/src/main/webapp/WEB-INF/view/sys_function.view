@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<h:screen xmlns:h="http://www.hand-china.com/hap" >
+    <script><![CDATA[   
+    function functionName(container, options) {
+           $('<input name="' + options.field + '"/>').appendTo(container)
+            .kendoTLEdit({
+                 idField: "functionId",
+                 field: "functionName",
+                 dto: "com.hand.hap.function.dto.Function",
+                 model: options.model
+            });
+     }
+     function functionDescription(container, options){
+         $('<input name="' + options.field + '"/>')
+         .appendTo(container)
+         .kendoTLEdit({
+             idField: 'functionId',
+             field: 'functionDescription',
+             dto: "com.hand.hap.function.dto.Function",
+             model: options.model
+         });
+    }
+
+    function parentFunctionIdTeml(dataItem){
+         return dataItem['parentFunctionName'] || ''
+    }
+
+    function parentFunctionId(container, options){
+        $('<input name="' + options.field + '"/>')
+        .appendTo(container)
+        .kendoLov($.extend(${lovProvider.getLov(base.contextPath,base.locale,"LOV_PARENTFUNCTION")}, {
+            textField: 'parentFunctionName',
+            model    : options.model
+        }));
+    } 
+    function resourceId(container, options){
+        $('<input name="' + options.field + '"/>')
+        .appendTo(container)
+        .kendoLov($.extend(${lovProvider.getLov(base.contextPath,base.locale,"LOV_RESOURCE")}, {
+            textField: 'resourceName',
+            model    : options.model
+        }));
+    
+    }
+    function resourceIdTeml(dataItem){
+        return dataItem['resourceName'] || ''
+    }
+    
+    function functionResourceTeml(rowdata){
+        if (!!rowdata.functionId) {
+            return '<a href="javascript:void(0);" onclick="editFunctionResources('+rowdata.functionId+')"><@spring.message "hap.edit"/></a>'
+        }
+        return '';
+    }
+    editFunctionResources = function (id) {
+        var dialog = $("#dialog").kendoWindow({
+            actions: ["Close"],
+            animation: {
+		    	close: {
+				    effects: "fadeOut zoom:out",
+				    duration: 300
+				},
+			    open: {
+			        effects: "fadeIn zoom:in",
+			        duration: 300
+			    }
+		    },
+            width  : 800,
+            height : 450,
+            title  : '<@spring.message "function.resourceallocation"/>',
+            visible: false,
+            iframe : true,
+            modal  : true,
+            content: 'sys/sys_function_resource.html?functionId=' + id
+        }).data("kendoWindow");
+        dialog.center().open();
+    };
+    function parameterMap(options, type){
+        if (type !== "read" && options.models) {
+            var datas = Hap.prepareSubmitParameter(options, type);
+            return kendo.stringify(datas);
+        }
+    }
+    ]]></script>
+    <div id="dialog"></div>
+    <h:dataSource id="dataSource" batch="true" pageSize="10">
+      <h:transport parameterMap="parameterMap">
+        <h:read url="sys/function/query" type="POST" dataType="json"/>
+        <h:create url="sys/function/submit" type="POST" contentType="application/json" />
+        <h:update url="sys/function/submit" type="POST" contentType="application/json" />
+        <h:destroy url="sys/function/remove" type="POST" contentType="application/json" />
+      </h:transport>
+      <h:schema data="rows" total="total">
+        <h:model id="functionId">
+        </h:model>
+      </h:schema>
+    </h:dataSource>
+    <h:grid dataSource="dataSource" selectable="multiple, rowbox" editable="true">
+      <h:pageable pageSizes="5, 10, 20, 50" buttonCount="5" refresh="true">
+      </h:pageable>
+      <h:columns>
+         <h:column field="moduleCode" title='<@spring.message "function.modulecode"/>' width="100">
+         </h:column>
+         <h:column field="functionCode" title='<@spring.message "function.functioncode"/>' width="180">
+         </h:column>
+         <h:column field="functionName" title='<@spring.message "function.functionname"/>' width="120" sortable="false" editor="fn:functionName">
+         </h:column>
+         <h:column field="functionIcon" title='<@spring.message "function.functionicon"/>' width="120" sortable="false" >
+         </h:column>
+         <h:column field="functionSequence" title='<@spring.message "function.functionsequence"/>' width="80" format="{0}" >
+             <h:attributes  style="text-align:right">
+             </h:attributes>
+         </h:column>
+         <h:column field="functionDescription" title='<@spring.message "function.functiondescription"/>' width="140" sortable="false" editor="fn:functionDescription">
+         </h:column>
+         <h:column field="parentFunctionId" title='<@spring.message "function.parentfunctionid"/>' width="120" sortable="false" editor="fn:parentFunctionId" template="fn:parentFunctionIdTeml" >
+         </h:column>
+         <h:column field="resourceId" title='<@spring.message "function.mainpage"/>' width="120" sortable="false" editor="fn:resourceId" template="fn:resourceIdTeml" >
+         </h:column>
+         <h:column title='<@spring.message "function.functionresource"/>' width="80"  template="fn:functionResourceTeml">
+             <h:attributes  style="text-align:center"/>
+         </h:column>
+      </h:columns>
+    </h:grid>
+</h:screen>

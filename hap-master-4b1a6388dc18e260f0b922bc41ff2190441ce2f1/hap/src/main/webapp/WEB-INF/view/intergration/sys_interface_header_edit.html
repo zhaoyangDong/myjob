@@ -1,0 +1,414 @@
+<#include "../include/header.html">
+
+<body>
+<script src="${base.contextPath}/common/code?isNeedCheck=SYS.YES_NO" type="text/javascript"></script>
+<script type="text/javascript">
+        var crudServiceBaseUrl = '${base.contextPath}/sys/api';
+        var isedit = '${RequestParameters.isedit!0}' == '1';
+        var viewModel = kendo.observable({
+                    model: {
+                        authFlag: 'N',
+                        enableFlag: true,
+                        requestFormat: 'raw',
+                        requestMethod: 'POST',
+                        interfaceType: 'SOAP'
+                    },
+                    save: function (e) {
+                        var url;
+                        if (isedit)
+                            url = crudServiceBaseUrl + '/updateHeader'
+                        else
+                            url = crudServiceBaseUrl + '/addHeader'
+                        var validator = $("#editForm").data("kendoValidator");
+                        if (validator.validate()) {
+                            var data= viewModel.model.toJSON();
+                            data.enableFlag = data.enableFlag?'Y':'N';
+                            $.ajax({
+                                type: 'POST',
+                                url: url,
+                                dataType: "json",
+                                contentType: 'application/json',
+                                data: kendo.stringify(data),
+                                success: function (data) {
+                                    window.parent.$('#grid').data('kendoGrid').dataSource.page(1);
+                                    window.parent.$("#dialogEdit").data("kendoWindow").close();
+                                    return;
+                                }
+                            });
+                        }
+                    },
+                    closeWin: function (e) {
+                        window.parent.$("#dialogEdit").data("kendoWindow").close()
+                    }
+                }
+        );
+
+
+    if(isedit){
+        $.ajax({
+            url: crudServiceBaseUrl + "/getHeaderByHeaderId",
+            type: "GET",
+            dataType: "json",
+            contentType: "application/json",
+            data: {headerId:"${RequestParameters.headerId!0}"},
+            success: function (args) {
+                var profile = args.rows[0]||{};
+                for(var i in profile){
+                    if(profile[i] != null){
+                        if( i === 'enableFlag'){
+                            viewModel.model.set("enableFlag",profile.enableFlag=='Y'?true:false);
+                        }else{
+                            viewModel.set("model."+ i,profile[i]);
+                        }
+
+                    }
+                }
+            }
+        });
+    }
+</script>
+<div id="content-container" >
+    <div id="page-content" >
+            <form class="form-horizontal" id="editForm"  >
+                    <div class = "row" style="margin-top: 5px" >
+                        <!--System Code-->
+                            <div class="col-sm-6 form-group ">
+                                <label class="col-sm-3 control-label"><@spring.message"interface.systemcode"/></label>
+                                <div class="col-sm-6">
+                                    <input name="code" id="systemCode" data-role="maskedtextbox" type="text"
+                                           style="width: 100%" class="k-textbox"
+                                           required data-bind="value: model.interfaceCode"/>
+                                    <script>kendo.bind($('#systemCode'), viewModel);</script>
+                                </div>
+                                <!-- 错误提示标签位置 -->
+                                    <span data-for="code" class=".k-invalid-msg"></span>
+                            </div>
+
+                        <!--System Name-->
+                            <div class="col-sm-6 form-group">
+                                <label class="col-sm-3 control-label"><@spring.message"interface.systemname"/></label>
+                                <div class="col-sm-6">
+                                    <input id="systemName" name="systemName" type="text" style="width: 100%" required
+                                           data-bind="value:model.name"/>
+                                    <script>
+                                        $("#systemName").kendoTLEdit({
+                                            idField: 'headerId',
+                                            field: 'name',
+                                            dto: "com.hand.hap.intergration.dto.HapInterfaceHeader",
+                                            model: viewModel.model
+                                        })
+                                        kendo.bind($('#systemName'),viewModel);
+                                    </script>
+                                </div>
+                                <span data-for="systemName" class=".k-invalid-msg"></span>
+                            </div>
+                    </div>
+
+                <div class = "row" style="margin-top: 5px" >
+                    <!--Interface Type-->
+                    <div class="col-sm-6 form-group ">
+                        <label class="col-sm-3 control-label"><@spring.message "interface.interfacetype"/></label>
+                        <div class="col-sm-6">
+                            <input id="interfaceType" name="interfaceType" style="width: 100%" type="text" required data-bind="value: model.interfaceType"/>
+                            <script>kendo.bind($('#interfaceType'), viewModel);</script>
+                        </div>
+                        <!-- 错误提示标签位置 -->
+                            <span data-for="interfaceType" class=".k-invalid-msg"></span>
+                    </div>
+
+
+                    <div class="col-sm-6 form-group">
+                        <label class="col-sm-3 control-label"><@spring.message "interface.systemurl"/></label>
+                        <div class="col-sm-6">
+                            <input id="systemAddress" name="systemAddress"  required
+                                   style="width: 100%" class="k-textbox" data-bind="value: model.domainUrl"/>
+                            <script>kendo.bind($('#systemAddress'), viewModel);</script>
+                        </div>
+
+                            <span data-for="systemAddress" class=".k-invalid-msg"></span>
+                    </div>
+
+                </div>
+
+
+
+                <div class = "row" style="margin-top: 5px" >
+
+                    <!--Request Style-->
+                    <div class="col-sm-6 form-group" >
+                        <label class="col-sm-3 control-label"><@spring.message"interface.requestformat"/></label>
+                        <div class="col-sm-6">
+                            <input id="requestStyle" style="width: 100%" type="text" data-bind="value: model.requestFormat"/>
+                            <script>kendo.bind($('#requestStyle'), viewModel);</script>
+                        </div>
+                    </div>
+
+                    <div id="mapperDiv" class="col-sm-6 form-group">
+                        <label class="col-sm-3 control-label"><@spring.message"interface.mapperclass"/></label>
+                        <div class="col-sm-6">
+                            <input id="mapperClass" data-role="maskedtextbox" type="text"
+                                   style="width: 100%" class="k-textbox" data-bind="value: model.mapperClass">
+                            <script>kendo.bind($('#mapperClass'), viewModel);</script>
+                        </div>
+                    </div>
+
+                    <!--NAMESPACE-->
+                    <div id="soapNamespace" class="col-sm-6 form-group">
+                        <label class="col-sm-3 control-label"><@spring.message"interface.namespace"/></label>
+                        <div class="col-sm-6">
+                            <input id="nameSpace" type="text" style="width: 100%"
+                                   class="k-textbox" data-bind="value: model.namespace"/>
+                            <script>kendo.bind($('#nameSpace'), viewModel);</script>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class = "row" style="margin-top: 5px" >
+                    <!--Enable Flag-->
+                    <div class="col-sm-6 form-group">
+                        <label class="col-sm-3 control-label" for="isValid"><@spring.message"interface.enableflag"/></label>
+                        <div class="col-sm-6" style="text-align: left ;">
+                            <input id="isValid" style="margin-top:8px" type="checkbox" data-bind="checked: model.enableFlag"/>
+                            <script>kendo.bind($('#isValid'), viewModel);</script>
+                        </div>
+                    </div>
+                    <!--Is Need Check-->
+                    <div id="authFlagDiv" class="col-sm-6 form-group">
+                        <label class="col-sm-3 control-label" ><@spring.message"interface.authflag"/></label>
+                        <div class="col-sm-6" >
+                            <input id="isNeedCheck"  type="text" data-bind="value: model.authFlag">
+                            <script>kendo.bind($('#isNeedCheck'), viewModel);</script>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!--Request Receive Type-->
+                <div class="row" id="RESTInfo" style="margin-top: 5px" >
+                    <div class="col-sm-6 form-group">
+                        <label class="col-sm-3 control-label"><@spring.message"interface.requestcontenttype"/></label>
+                        <div class="col-sm-6">
+                            <input id="requestRcvType" data-role="maskedtextbox" type="text"
+                                   style="width: 100%" class="k-textbox" data-bind="value: model.requestContentType">
+                            <script>kendo.bind($('#requestRcvType'), viewModel);</script>
+                        </div>
+                    </div>
+                    <!--Request Accept-->
+                    <div class="col-sm-6 form-group">
+                        <label class="col-sm-3 control-label"><@spring.message"interface.requestaccept"/></label>
+                        <div class="col-sm-6">
+                            <input id="requestMsgStyle" data-role="maskedtextbox" type="text"
+                                   style="width: 100%"  class="k-textbox"
+                                   data-bind="value: model.requestAccept"/>
+                            <script>kendo.bind($('#requestMsgStyle'), viewModel);</script>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="authInfo" class = "row" style="margin-top: 5px" >
+                    <!--auth Username-->
+                    <div class="col-sm-6 form-group" id="checkUsernameDiv">
+                            <label class="col-sm-3 control-label"><@spring.message"interface.checkusername"/></label>
+                            <div class="col-sm-6">
+                                <input data-role="maskedtextbox" type="text" id="checkUsername"
+                                       style="width: 100%" data-bind="value: model.authUsername" class="k-textbox"/>
+                                <script>kendo.bind($('#checkUsername'), viewModel);</script>
+                            </div>
+                    </div>
+
+                    <!--Check Password-->
+                    <div class="col-sm-6 form-group" id="checkPasswordDiv">
+                            <label class="col-sm-3 control-label"><@spring.message"interface.checkpassword"/></label>
+                            <div class="col-sm-6">
+                                <input data-role="maskedtextbox" id="checkPassword" type="text" style="width: 100%"
+                                       class="k-textbox" data-bind="value: model.authPassword"/>
+                                <script>kendo.bind($('#checkPassword'), viewModel);</script>
+                            </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 5px" >
+                    <!--SOAP MSG Prefix-->
+                    <div class="col-sm-6 form-group" id="soapPreDiv">
+                            <label class="col-sm-3 control-label"><@spring.message"interface.soapheader"/></label>
+                            <div class="col-sm-6">
+                                <textarea class="form-control" rows="4"  id="SoapPrefix" data-bind="value: model.bodyHeader"></textarea>
+                                <script>kendo.bind($('#SoapPrefix'), viewModel);</script>
+                            </div>
+                    </div>
+                    <!--SOAP Postfix-->
+                    <div class="col-sm-6 form-group" id="soapPostDiv">
+                            <label class="col-sm-3 control-label"><@spring.message"interface.soaptail"/></label>
+                            <div class="col-sm-6">
+                                <textarea class="form-control"  rows="4" id="SoapPostTail"   data-bind="value: model.bodyTail"></textarea>
+                                <script>kendo.bind($('#SoapPostTail'), viewModel);</script>
+                            </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 5px" >
+                    <!--Request Method-->
+                    <div id="RESTRequestMethod" class="col-sm-6 form-group">
+                        <label class="col-sm-3 control-label"><@spring.message"interface.requestmethod"/></label>
+                        <div class="col-sm-6">
+                            <input id="requestMethod" style="width: 100%" type="text" data-bind="value: model.requestMethod"/>
+                            <script>kendo.bind($('#requestMethod'), viewModel);</script>
+                        </div>
+                    </div>
+                </div>
+
+
+               <!-- <div class="row" style="margin-top: 5px" >
+                    &lt;!&ndash;System Type&ndash;&gt;
+                    <div class="col-sm-6 form-group">
+                        <label class="col-sm-3 control-label"><@spring.message"interface.systemtype"/></label>
+                        <div class="col-sm-6">
+                            <input id="systemType" style="width: 100%" type="text"/>
+                            <script>kendo.bind($('#systemType'), viewModel);</script>
+                        </div>
+                    </div>
+
+                </div>-->
+
+                <div class="col-sm-offset-4 col-sm-4" style="position:fixed; bottom:10px;">
+                            <div class="text-center">
+                                <span class="btn btn-default" id="cancel" type="button" data-bind="click:closeWin"><@spring.message
+                                    "hap.cancel"/>
+                                </span>
+                                <span class="btn btn-primary" id="save"  data-bind="click:save"><@spring.message
+                                    "hap.save"/>
+                                </span>
+                                <script>
+                                    kendo.bind($('#cancel'), viewModel);
+                                    kendo.bind($('#save'), viewModel);
+                                </script>
+                            </div>
+                </div>
+                    <!-- end panel-->
+            </form>
+        </div>
+    </div>
+
+<script type="text/javascript">
+    var isedit = '${RequestParameters.isedit!0}' == '1';
+
+    var container = $("#editForm");
+    kendo.init(container);
+    container.kendoValidator({
+        messages: {
+            required: "required"
+        }
+    });
+    //kendo.bind($('#page-content'), viewModel);
+
+
+    $("#interfaceType").kendoDropDownList({
+        dataTextField: "meaning",
+        dataValueField: "value",
+        valuePrimitive: true,
+        dataSource: {
+            data:[{meaning:"SOAP",value:"SOAP"},
+                  {meaning:"REST",value:"REST"},
+                  {meaning:"PLSQL",value:"PLSQL"}
+            ]
+        },
+        change: function(e) {
+            var value = this.value();
+            if(value != "SOAP"){
+                $("#soapPreDiv").hide();
+                $("#soapPostDiv").hide();
+                $("#soapNamespace").hide();
+                $("#mapperDiv").show();
+            }
+            else{
+                $("#soapPreDiv").show();
+                $("#soapPostDiv").show();
+                $("#soapNamespace").show();
+                $("#mapperDiv").hide();
+            }
+            if(value != "REST"){
+                $("#RESTInfo").hide();
+                $("#RESTRequestMethod").hide();
+            }else{
+                $("#RESTInfo").show();
+                $("#RESTRequestMethod").show();
+            }
+
+            if(value =="PLSQL"){
+                $("#authFlagDiv").hide();
+            }else{
+                $("#authFlagDiv").show();
+            }
+
+        }
+    });
+
+
+    $("#requestMethod").kendoDropDownList({
+        dataTextField: "meaning",
+        dataValueField: "value",
+        valuePrimitive: true,
+        dataSource: {
+            data:[{meaning:"GET",value:"GET"},
+                {meaning:"POST",value:"POST"}
+            ]
+        }
+    });
+
+
+    $("#requestStyle").kendoDropDownList({
+        dataTextField: "meaning",
+        dataValueField: "value",
+        valuePrimitive: true,
+        dataSource: {
+            data:[{meaning:"raw",value:"raw"}
+            ]
+        }
+    });
+    $("#isNeedCheck").kendoDropDownList({
+        dataTextField: "meaning",
+        dataValueField: "value",
+        valuePrimitive: true,
+        dataSource: isNeedCheck,
+        change:function(e){
+            var value = this.value();
+            if(value == "Y") {
+                $("#checkUsernameDiv").show()
+                $("#checkPasswordDiv").show()
+            }
+            else{
+                $("#checkUsernameDiv").hide()
+                $("#checkPasswordDiv").hide()
+            }
+        }
+
+    });
+    $(document).ready(function () {
+        if (viewModel.model.interfaceType != "SOAP") {
+            $("#soapPreDiv").hide()
+            $("#soapPostDiv").hide()
+            $("#soapNamespace").hide()
+        }
+        if (viewModel.model.interfaceType != "REST") {
+            $("#RESTInfo").hide()
+            $("#RESTRequestMethod").hide()
+        }
+
+        if(viewModel.model.interfaceType =="PLSQL"){
+            $("#authFlagDiv").hide()
+        }
+
+        if(viewModel.model.interfaceType == "SOAP"){
+            $("#mapperDiv").hide()
+        }
+
+
+        if (viewModel.model.authFlag != "Y") {
+            $("#checkUsernameDiv").hide()
+            $("#checkPasswordDiv").hide()
+        }
+    });
+</script>
+</body>

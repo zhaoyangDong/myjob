@@ -1,0 +1,144 @@
+<#--
+ * description: 我的个人申请
+ * version: 1.0
+ * author:jessen
+ * #{copyright}#
+ *
+-->
+<#include "../include/head.html">
+<body style="padding: 10px;">
+<form id="processHistoryForm">
+</form>
+<div id="processHistoryGrid"></div>
+
+<script type="text/javascript">
+    function openTaskHistory(piid) {
+        $.ligerDialog.open({
+            url   : '${base.contextPath}/activiti/process_history_detail.html?processInstanceId=' + piid,
+            title : '审批历史',
+            width : 800,
+            height: 500
+        });
+    }
+
+
+    $(function () {
+
+        /* dataForm表单提交 */
+        window['processHistoryForm'] = $("#processHistoryForm").ligerForm({
+            fields : [{
+                label: '发起人',
+                name : 'startedBy'
+            }, {
+                label  : '开始日期从',
+                type   : 'date',
+                options: {
+                    format: 'yyyy-MM-dd hh:mm:ss', showTime: true
+                },
+                name   : 'startedAfter'
+            }, {
+                label  : '开始日期至',
+                type   : 'date',
+                name   : 'startedBefore',
+                options: {
+                    format: 'yyyy-MM-dd hh:mm:ss', showTime: true
+                },
+                newline: false
+            }, {
+                label  : '结束日期从',
+                type   : 'date',
+                options: {
+                    format: 'yyyy-MM-dd hh:mm:ss', showTime: true
+                },
+                name   : 'finishedAfter'
+            }, {
+                label  : '结束日期至',
+                type   : 'date',
+                options: {
+                    format: 'yyyy-MM-dd hh:mm:ss', showTime: true
+                },
+                name   : 'finishedBefore',
+                newline: false
+            }],
+            buttons: [{
+                text    : '查询',
+                disabled: false,
+                width   : 60,
+                click   : function () {
+                    Hap.gridQuery({
+                        form: processHistoryForm,
+                        grid: processHistoryGrid
+                    })
+                }
+            }]
+        });
+
+        window['processHistoryGrid'] = $("#processHistoryGrid").ligerGrid({
+            unSetValidateAttr: false,
+            columns          : [
+                {
+                    display: '流程 ID',
+                    name   : 'processDefinitionId',
+                    align  : 'center',
+                    width  : 160,
+                    render : function (item) {
+                        return item.processDefinitionId.link("javascript:openTaskHistory('" + item.id + "')")
+                    }
+                }, {
+                    display: '发起人',
+                    name   : 'startUserId',
+                    width  : '100',
+                    align  : 'center'
+                }, {
+                    display: '开始时间',
+                    name   : 'startTime',
+                    width  : 140,
+                    align  : 'center',
+                    render : function (item) {
+                        if (item.startTime) {
+                            return new Date(item.startTime).format("yyyy-MM-dd HH:mm:ss")
+                        }
+                        return '';
+                    }
+                }, {
+                    display: '结束时间',
+                    name   : 'endTime',
+                    width  : 140,
+                    align  : 'center',
+                    render : function (item) {
+                        if (item.endTime) {
+                            return new Date(item.endTime).format("yyyy-MM-dd HH:mm:ss")
+                        }
+                        return '';
+                    }
+                }
+            ],
+            url              : '${base.contextPath}/history/historic-process-instances',
+            toolbar          : {
+                items: [{
+                    text : '<@spring.message "hap.delete"/>',
+                    click: function () {
+
+                    },
+                    icon : 'delete'
+                }]
+            },
+            method           : 'get',
+            width            : '99%',
+            height           : '98%',
+            checkbox         : true,
+            pageParmName     : 'start',
+            pagesizeParmName : 'size',
+            sortnameParmName : 'sort',
+            sortorderParmName: 'order',
+            root             : 'data',
+            record           : 'total',
+            pagerHandler     : function (param, p) {
+                param.push({name: p.pageParmName, value: (p.newPage - 1) * p.pageSize});
+                param.push({name: p.pagesizeParmName, value: p.pageSize});
+            }
+        })
+    })
+</script>
+</body>
+</html>

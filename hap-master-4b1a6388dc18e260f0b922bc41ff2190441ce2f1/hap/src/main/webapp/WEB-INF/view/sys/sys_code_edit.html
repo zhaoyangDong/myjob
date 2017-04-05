@@ -1,0 +1,201 @@
+<#-- 
+* description: 快速编码界面
+* author:jialong.zuo@hand-china.com
+* version: 1.0 
+* 
+-->
+<#include "../include/header.html">
+<div>
+    <script type="text/javascript">
+
+        var isedit = '${RequestParameters.isedit!0}' == '1';
+
+        viewModel = kendo.observable({
+            model: {}
+        });
+
+        if (isedit) {
+            $.ajax({
+                url: '${base.contextPath}/sys/code/query?codeId=${RequestParameters.codeId!0}',
+                success: function (args) {
+                    var a0 = args.rows[0] || {};
+                    for (var k in a0) {
+                        viewModel.model.set(k, a0[k]);
+                    }
+                }
+            });
+        }
+    </script>
+    <div id="page-content" style="width:580px">
+        <form class="form-horizontal" style="width:550px">
+            <div class="col-xs-12">
+                <div class="form-group">
+                    <label class="col-xs-2 col-xs-offset-1 control-label" style="text-align: right"><@spring.message "code.code"/></label>
+                    <div class="col-xs-6">
+                        <input id="code" type="text" data-bind="value:model.code" class="k-textbox" style="width: 100%;">
+                        <script>kendo.bind($('#code'), viewModel);</script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12">
+                <div class="form-group">
+                    <label class="col-xs-2 col-xs-offset-1 control-label" style="text-align: right"><@spring.message "code.description"/></label>
+                    <div class="col-xs-6">
+                        <input id="description" type="text" data-bind="value:model.description" style="width: 100%;">
+                        <script>
+                            $("#description").kendoTLEdit({
+                                idField: 'codeId',
+                                field: 'description',
+                                dto: "com.hand.hap.system.dto.CodeValue",
+                                model: viewModel.model
+                            })
+                            kendo.bind($('#description'), viewModel);
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id='grid-container' style="clear: both;width: 590px;">
+    <div id="codeValueGrid" style="margin-left:10px"></div>
+    <!--        <div style="width: 600px;align:center;" >
+        <span id= "saveGrid" class="btn btn-success k-grid-save-changes"  style="margin-left:270px ;margin-top:12px; margin-bottom:10px" ><@spring.message "hap.save"/></span>
+       </div>-->
+</div>
+
+</div>
+<script>
+
+
+    var crudServiceBaseUrl = "${base.contextPath}/sys/codevalue";
+    dataSource = new kendo.data.DataSource({
+        transport: {
+            read: {
+                url: crudServiceBaseUrl + "/query?codeId=${RequestParameters.codeId!0}",
+                type: "POST",
+                dataType: "json"
+            },
+            create: {
+                url: "${base.contextPath}/sys/code/submit",
+                contentType: "application/json",
+                type: "POST"
+            },
+            update: {
+                url: "${base.contextPath}/sys/code/submit",
+                contentType: "application/json",
+                type: "POST"
+            },
+            destroy: {
+                url: crudServiceBaseUrl + "/remove",
+                contentType: "application/json",
+                type: "POST"
+            },
+            parameterMap: function (options, type) {
+                if (type !== "read" && options.models) {
+                    var datas = Hap.prepareSubmitParameter(options, type);
+                    return kendo.stringify(datas);
+                } else if (type === "read") {
+                    return Hap.prepareQueryParameter(viewModel.model.toJSON(), options);
+                }
+            }
+        },
+        batch: true,
+        serverPaging: true,
+        pageSize: 10,
+        schema: {
+            data: 'rows',
+            total: 'total',
+            model: {
+                id: "codeValueId",
+                fields: {
+                    value: {validation: {required: true}},
+                    orderSeq: {type: "number"}
+                }
+            }
+        }
+    });
+
+    var grid = $("#codeValueGrid").kendoGrid({
+        dataSource: dataSource,
+        navigatable: false,
+        height: '300px',
+        resizable: true,
+        scrollable: true,
+        selectable: 'multiple,rowbox',
+        toolbar: [{
+            name: "create",
+            template: '<span class="btn btn-primary k-grid-add"><@spring.message "hap.new"/></span>'
+        }, {
+            template: '<span id= "saveGrid" class="btn btn-success" ><@spring.message "hap.save"/></span>'
+        },
+            {
+                template: '<span  onclick="deleteData()"  class="btn btn-danger"><@spring.message "hap.delete"/></span>'
+            }],
+        columns: [
+            {field: "value", title: '<@spring.message "codevalue.value"/>', width: 80},
+            {
+                field: "meaning",
+                title: '<@spring.message "codevalue.meaning"/>',
+                width: 120,
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoTLEdit({
+                                idField: 'codeValueId',
+                                field: 'meaning',
+                                dto: "com.hand.hap.system.dto.CodeValue",
+                                model: options.model
+                            });
+                }
+            },
+            {
+                field: "description",
+                title: '<@spring.message "codevalue.description"/>',
+                width: 120,
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoTLEdit({
+                                idField: 'codeValueId',
+                                field: options.field,
+                                dto: "com.hand.hap.system.dto.CodeValue",
+                                model: options.model
+                            });
+                }
+            },
+            {field: "orderSeq", title: '<@spring.message "codevalue.orderseq"/>', width: 80}
+        ],
+        editable: true
+    }).data("kendoGrid");
+
+    function deleteData() {
+
+        Hap.deleteGridSelection({
+            grid: $('#codeValueGrid')
+        });
+    }
+
+    $("#saveGrid").click(function () {
+        viewModel.model.__status = isedit ? 'update' : 'add';
+        Hap.submitForm({
+            url: '${base.contextPath}/sys/code/submit',
+            formModel: viewModel.model,
+            grid: {"codeValues": $("#codeValueGrid")},
+            success: function (data) {
+                grid.dataSource.query();
+                if (isedit) {
+                    window.parent.$("#editWin").data("kendoWindow").close();
+                } else {
+                    window.parent.$("#newWin").data("kendoWindow").close();
+                }
+            }
+        });
+    });
+
+
+</script>
+</body>
+</html>

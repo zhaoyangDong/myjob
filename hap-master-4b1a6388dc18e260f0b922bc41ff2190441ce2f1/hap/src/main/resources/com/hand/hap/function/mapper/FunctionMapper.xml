@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ~ #{copyright}#
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hap.function.mapper.FunctionMapper" >
+  <resultMap id="BaseResultMap" type="com.hand.hap.function.dto.Function" extends="com.hand.hap.mapper.StdMapper.STD" >
+    <id column="FUNCTION_ID" property="functionId" jdbcType="DECIMAL" />
+    <result column="MODULE_CODE" property="moduleCode" jdbcType="VARCHAR" />
+    <result column="FUNCTION_ICON" property="functionIcon" jdbcType="VARCHAR" />
+    <result column="FUNCTION_CODE" property="functionCode" jdbcType="VARCHAR" />
+    <result column="FUNCTION_NAME" property="functionName" jdbcType="VARCHAR" />
+    <result column="FUNCTION_DESCRIPTION" property="functionDescription" jdbcType="VARCHAR" />
+    <result column="LANG" property="lang" jdbcType="VARCHAR" />
+    <result column="RESOURCE_ID" property="resourceId" jdbcType="DECIMAL" />
+    <result column="PARENT_FUNCTION_ID" property="parentFunctionId" jdbcType="DECIMAL"/>
+    <result column="TYPE" property="type" jdbcType="VARCHAR" />
+    <result column="FUNCTION_SEQUENCE" property="functionSequence" jdbcType="DECIMAL" />
+  </resultMap>
+  <resultMap id="FunctionDisplayMap" type="com.hand.hap.function.dto.FunctionDisplay" extends="BaseResultMap">
+      <result column="PARENT_FUNCTION_NAME" property="parentFunctionName" jdbcType="VARCHAR" />
+      <result column="RESOURCE_NAME" property="resourceName" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    FUNCTION_ID, MODULE_CODE, FUNCTION_ICON,FUNCTION_SEQUENCE, FUNCTION_CODE, FUNCTION_NAME, FUNCTION_DESCRIPTION, RESOURCE_ID, TYPE, 
+    PARENT_FUNCTION_ID, OBJECT_VERSION_NUMBER, REQUEST_ID, PROGRAM_ID, CREATION_DATE, CREATED_BY,
+    LAST_UPDATED_BY, LAST_UPDATE_DATE, LAST_UPDATE_LOGIN, ATTRIBUTE_CATEGORY, ATTRIBUTE1, 
+    ATTRIBUTE2, ATTRIBUTE3, ATTRIBUTE4, ATTRIBUTE5, ATTRIBUTE6, ATTRIBUTE7, ATTRIBUTE8, 
+    ATTRIBUTE9, ATTRIBUTE10, ATTRIBUTE11, ATTRIBUTE12, ATTRIBUTE13, ATTRIBUTE14, ATTRIBUTE15
+  </sql>
+
+  <select id="selectFunctions" resultMap="FunctionDisplayMap" parameterType="com.hand.hap.function.dto.Function" >
+    SELECT sfb.FUNCTION_ID, sfb.MODULE_CODE, sfb.FUNCTION_ICON, sfb.FUNCTION_SEQUENCE, sfb.FUNCTION_CODE,
+    sft.FUNCTION_NAME, sft.FUNCTION_DESCRIPTION, sfb.RESOURCE_ID, srtl.NAME as RESOURCE_NAME,
+    sfb.TYPE, sfb.OBJECT_VERSION_NUMBER, sfb.REQUEST_ID,
+    sfb.PROGRAM_ID, sfb.CREATION_DATE, sfb.CREATED_BY, 
+    sfb.LAST_UPDATED_BY, sfb.LAST_UPDATE_DATE, sfb.LAST_UPDATE_LOGIN, 
+    sfb.ATTRIBUTE_CATEGORY, sfb.ATTRIBUTE1,sfb.ATTRIBUTE2, sfb.ATTRIBUTE3, 
+    sfb.ATTRIBUTE4, sfb.ATTRIBUTE5, sfb.ATTRIBUTE6, sfb.ATTRIBUTE7, sfb.ATTRIBUTE8, 
+    sfb.ATTRIBUTE9, sfb.ATTRIBUTE10, sfb.ATTRIBUTE11, sfb.ATTRIBUTE12, 
+    sfb.ATTRIBUTE13, sfb.ATTRIBUTE14, sfb.ATTRIBUTE15,sfb.PARENT_FUNCTION_ID
+    FROM SYS_FUNCTION_B sfb
+      LEFT OUTER JOIN SYS_FUNCTION_TL sft
+        on( sfb.FUNCTION_ID = sft.FUNCTION_ID AND sft.lang = #{request.locale,jdbcType=VARCHAR})
+      LEFT OUTER JOIN SYS_RESOURCE_TL srtl
+        ON ( sfb.resource_id = srtl.resource_id AND srtl.lang = #{request.locale,jdbcType=VARCHAR})
+    <where>
+       <if test="functionId != null">
+           sfb.FUNCTION_ID = #{functionId,jdbcType=DECIMAL}
+       </if>
+       <if test="moduleCode != null">
+           AND sfb.MODULE_CODE like concat('%',concat(#{moduleCode,jdbcType=VARCHAR},'%'))
+       </if>
+       <if test="functionCode != null">
+           AND sfb.FUNCTION_CODE like concat('%',concat(#{functionCode,jdbcType=VARCHAR},'%'))
+       </if>
+       <if test="parentFunctionId != null">
+           AND sfb.PARENT_FUNCTION_ID = #{parentFunctionId,jdbcType=DECIMAL}
+       </if>
+       <if test="functionName != null">
+           AND sft.FUNCTION_NAME like concat('%',concat(#{functionName,jdbcType=VARCHAR},'%'))
+       </if>
+       <if test="resourceId != null">
+           AND sfb.resource_id = #{resourceId,jdbcType=DECIMAL}
+       </if>
+    </where>
+
+    <if test="sortname !=null">
+      <bind name="_colName" value="@com.hand.hap.mybatis.util.OGNL@unCamel(sortname)"/>
+        order by sfb.${_colName} ${sortorder}
+    </if>
+    <if test="sortname ==null">
+        order by sfb.function_code asc
+    </if>
+    
+  </select>
+  <resultMap id="ResourceResultMap" type="com.hand.hap.function.dto.Resource" extends="com.hand.hap.mapper.StdMapper.STD" >
+    <id column="RESOURCE_ID" property="resourceId" jdbcType="DECIMAL" />
+    <result column="URL" property="url" jdbcType="VARCHAR" />
+    <result column="TYPE" property="type" jdbcType="VARCHAR" />
+    <result column="NAME" property="name" jdbcType="VARCHAR" />
+    <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+    <result column="LOGIN_REQUIRE" property="loginRequire" jdbcType="VARCHAR" />
+  </resultMap>
+  
+  <select id="selectExistsResourcesByFunction" resultMap="ResourceResultMap" parameterType="map">
+        select
+        b.RESOURCE_ID, b.URL, b.TYPE, t.NAME, t.DESCRIPTION, b.LOGIN_REQUIRE, b.OBJECT_VERSION_NUMBER,
+        b.REQUEST_ID, b.PROGRAM_ID, b.CREATION_DATE, b.CREATED_BY, b.LAST_UPDATED_BY, b.LAST_UPDATE_DATE,
+        b.LAST_UPDATE_LOGIN, b.ATTRIBUTE_CATEGORY, b.ATTRIBUTE1, b.ATTRIBUTE2, b.ATTRIBUTE3, b.ATTRIBUTE4,
+        b.ATTRIBUTE5, b.ATTRIBUTE6, b.ATTRIBUTE7, b.ATTRIBUTE8, b.ATTRIBUTE9, b.ATTRIBUTE10, b.ATTRIBUTE11,
+        b.ATTRIBUTE12, b.ATTRIBUTE13, b.ATTRIBUTE14, b.ATTRIBUTE15
+        from SYS_RESOURCE_B b
+        LEFT OUTER JOIN SYS_RESOURCE_TL t
+          on(b.resource_id = t.resource_id and t.lang = #{request.locale,jdbcType=VARCHAR})
+        JOIN SYS_FUNCTION_RESOURCE sfr 
+          on(b.RESOURCE_ID=sfr.RESOURCE_ID and sfr.FUNCTION_ID=#{function.functionId,jdbcType=DECIMAL})
+        <where>
+            <if test="resource.url != null">
+                AND b.URL like concat('%',concat(#{resource.url,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="resource.name != null">
+                AND t.NAME like concat('%',concat(#{resource.name,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="resource.type != null">
+                AND b.TYPE like concat('%',concat(#{resource.type,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="resource.description != null">
+                AND t.DESCRIPTION like concat('%',concat(#{resource.description,jdbcType=VARCHAR},'%'))
+            </if>
+        </where>
+      order by b.RESOURCE_ID
+  </select>
+  <select id="selectNotExistsResourcesByFunction" resultMap="ResourceResultMap" parameterType="map">
+        select
+        b.RESOURCE_ID, b.URL, b.TYPE, t.NAME, t.DESCRIPTION, b.LOGIN_REQUIRE, b.OBJECT_VERSION_NUMBER,
+        b.REQUEST_ID, b.PROGRAM_ID, b.CREATION_DATE, b.CREATED_BY, b.LAST_UPDATED_BY, b.LAST_UPDATE_DATE,
+        b.LAST_UPDATE_LOGIN, b.ATTRIBUTE_CATEGORY, b.ATTRIBUTE1, b.ATTRIBUTE2, b.ATTRIBUTE3, b.ATTRIBUTE4,
+        b.ATTRIBUTE5, b.ATTRIBUTE6, b.ATTRIBUTE7, b.ATTRIBUTE8, b.ATTRIBUTE9, b.ATTRIBUTE10, b.ATTRIBUTE11,
+        b.ATTRIBUTE12, b.ATTRIBUTE13, b.ATTRIBUTE14, b.ATTRIBUTE15
+        from SYS_RESOURCE_B b
+        LEFT OUTER JOIN SYS_RESOURCE_TL t
+          on(b.resource_id = t.resource_id and t.lang = #{request.locale,jdbcType=VARCHAR})
+        <where>
+          b.RESOURCE_ID NOT IN (
+        SELECT sfr.RESOURCE_ID from SYS_FUNCTION_RESOURCE sfr 
+        WHERE sfr.FUNCTION_ID = #{function.functionId,jdbcType=DECIMAL})
+            <if test="resource.url != null">
+                AND b.URL like concat('%',concat(#{resource.url,jdbcType=VARCHAR},'%'))
+            </if>
+            <if test="resource.name != null">
+                AND t.NAME like concat('%',concat(#{resource.name,jdbcType=VARCHAR},'%'))
+            </if>
+        </where>
+        order by b.RESOURCE_ID
+  </select>
+
+    <select id="selectForCache" resultMap="BaseResultMap">
+        SELECT sfb.FUNCTION_ID,
+               sfb.MODULE_CODE,
+               sfb.FUNCTION_ICON,
+               sfb.FUNCTION_SEQUENCE,
+               sfb.FUNCTION_CODE,
+               sft.FUNCTION_NAME,
+               sft.FUNCTION_DESCRIPTION,
+               sfb.RESOURCE_ID,
+               sfb.TYPE,
+               sfb.PARENT_FUNCTION_ID,
+               sft.lang
+          FROM SYS_FUNCTION_B sfb
+          LEFT OUTER JOIN SYS_FUNCTION_TL sft
+            on (sfb.FUNCTION_ID = sft.FUNCTION_ID)
+            where sft.lang is not null
+    </select>
+</mapper>

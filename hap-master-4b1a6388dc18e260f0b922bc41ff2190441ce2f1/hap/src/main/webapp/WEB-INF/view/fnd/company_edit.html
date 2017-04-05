@@ -1,0 +1,282 @@
+<#--
+        * description: 快速编码界面
+        *author:jialong.zuo@hand-china.com
+        * version: 1.0
+        *
+        -->
+<#include "../include/header.html">
+<body>
+<script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<script>
+    var isedit = '${RequestParameters.isedit!0}' == '1';
+
+    newViewModel = kendo.observable({
+        model: {}
+    });
+    if (isedit) {
+        $.ajax({
+            url    : '${base.contextPath}/fnd/company/query?companyId=${RequestParameters.companyId!0}',
+            success: function (args) {
+                var a0 = args.rows[0] || {};
+                for (var k in a0) {
+                    newViewModel.model.set(k, a0[k]);
+                }
+            }
+        });
+
+    }
+
+</script>
+
+    <div id="page-content" >
+        <form class="form-horizontal" >
+
+            <div class="col-xs-12" >
+                <div class="form-group">
+                    <label class="col-xs-2  control-label"
+                           style="text-align: right"><@spring.message "company.companyShortName"/></label>
+                    <div class="col-xs-5">
+                        <input id="companyShortName" type="text" data-bind="value:model.companyShortName"
+                               style="width: 100%;">
+                        <script>
+                            $("#companyShortName").kendoTLEdit({
+                                idField: 'companyId',
+                                field: 'companyShortName',
+                                dto: "com.hand.hap.fnd.dto.Company",
+                                model: newViewModel.model
+                            })
+                            kendo.bind($('#companyShortName'), newViewModel);
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12" >
+                <div class="form-group">
+                    <label class="col-xs-2 control-label"
+                           style="text-align: right"><@spring.message "company.companyFullName"/></label>
+                    <div class="col-xs-5">
+                        <input id="companyFullName" type="text" data-bind="value:model.companyFullName"
+                               style="width: 100%;">
+                        <script>
+                            $("#companyFullName").kendoTLEdit({
+                                idField: 'companyId',
+                                field: 'companyFullName',
+                                dto: "com.hand.hap.fnd.dto.Company",
+                                model: newViewModel.model
+                            })
+                            kendo.bind($('#companyFullName'), newViewModel);
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12" >
+                <div class="form-group">
+                    <label class="col-xs-2 control-label"
+                           style="text-align: right"><@spring.message "company.companyCode"/></label>
+                    <div class="col-xs-5">
+                        <input id="companyCode" name="companyCode" type="text"  required validationMessage="<@spring.message "hap.validation.notempty"/>"  data-bind="value:model.companyCode" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#companyCode'), newViewModel);</script>
+                    </div>
+                    <div class="col-xs-4" >
+                        <span class="k-invalid-msg" data-for="companyCode"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-12" >
+                <div class="form-group">
+                    <label class="col-xs-2 control-label"
+                           style="text-align: right"><@spring.message "company.address"/></label>
+                    <div class="col-xs-5">
+                        <input id="address" type="text" data-bind="value:model.address" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#address'), newViewModel);</script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-6" >
+                <div class="form-group">
+                    <label class="col-xs-4 control-label"
+                           style="text-align: right"><@spring.message "company.companyType"/></label>
+                    <div class="col-xs-7">
+                        <input id="companyType" type="text" data-bind="value:model.companyType" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#companyType'), newViewModel);</script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-6">
+                <div class="form-group">
+                    <label class="col-xs-4 control-label"
+                           style="text-align: right"><@spring.message "company.companyLevelId"/></label>
+                    <div class="col-xs-7">
+                        <input id="companyLevelId" type="text" data-bind="value:model.companyLevelId" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#companyLevelId'), newViewModel);</script>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-xs-6" >
+                <div class="form-group">
+                    <label class="col-xs-4 control-label"
+                           style="text-align: right"><@spring.message "company.parentCompanyName"/></label>
+                    <div class="col-xs-7">
+                        <input type="text" id="parentCompanyId"
+                               style="width:100%;" data-bind="value:model.parentCompanyId,text:model.parentCompanyName">
+                        <script>
+                            $("#parentCompanyId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "LOV_COMPANY")}, {
+                                query: function (e) {
+                                    e.param['enabledFlag'] = 'Y';
+                                }
+                            }))
+                            kendo.bind($('#parentCompanyId'), newViewModel);
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-6">
+                <div class="form-group">
+                    <label class="col-xs-4 control-label"
+                           style="text-align: right"><@spring.message "company.positionName"/></label>
+                    <div class="col-xs-7">
+                        <input type="text" id="chiefPositionId"
+                               style="width:100%;" data-bind="value:model.chiefPositionId,text:model.positionName">
+                        <script>
+                            $("#chiefPositionId").kendoLov($.extend(${lovProvider.getLov(base.contextPath, base.locale, "LOV_POSITION")}, {
+                                query: function (e) {
+                                    e.param['enabledFlag'] = 'Y';
+                                }
+                            }))
+                            kendo.bind($('#chiefPositionId'), newViewModel);
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-xs-6">
+                <div class="form-group">
+                    <label class="col-xs-4 control-label"
+                           style="text-align: right"><@spring.message "user.startactivedate"/></label>
+                    <div class="col-xs-7">
+                        <input id="startDateActive" style="width: 100%"  data-bind="value:model.startDateActive">
+                        <script>
+                            $('#startDateActive').kendoDatePicker();
+                            kendo.bind($('#startDateActive'), newViewModel);</script>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-6" >
+                <div class="form-group">
+                    <label class="col-xs-4 control-label"
+                           style="text-align: right"><@spring.message "user.endactivedate"/></label>
+                    <div class="col-xs-7">
+                        <input style="width: 100%" id="endDateActive"  data-bind="value:model.endDateActive"/>
+                        <script>
+                            $('#endDateActive').kendoDatePicker();
+                            kendo.bind($('#endDateActive'), newViewModel);
+                        </script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-6" >
+                <div class="form-group">
+                    <label class="col-xs-4 control-label"
+                           style="text-align: right"><@spring.message "company.zipcode"/></label>
+                    <div class="col-xs-7">
+                        <input id="zipcode" type="text" data-bind="value:model.zipcode" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#zipcode'), newViewModel);</script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-6" >
+                <div class="form-group">
+                    <label class="col-xs-4 control-label"
+                           style="text-align: right"><@spring.message "company.fax"/></label>
+                    <div class="col-xs-7">
+                        <input id="fax" type="text" data-bind="value:model.fax" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#fax'), newViewModel);</script>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-6">
+                <div class="form-group">
+                    <label class="col-xs-4 control-label"
+                           style="text-align: right"><@spring.message "company.phone"/></label>
+                    <div class="col-xs-7">
+                        <input id="phone" type="text" data-bind="value:model.phone" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#phone'), newViewModel);</script>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xs-6">
+                <div class="form-group">
+                    <label class="col-xs-4   control-label"
+                           style="text-align: right"><@spring.message "company.contactPerson"/></label>
+                    <div class="col-xs-7">
+                        <input id="contactPerson" type="text" data-bind="value:model.contactPerson" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#contactPerson'), newViewModel);</script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-right" style="bottom: 20px;position: fixed; right: 85px; float: left; background: #fff;">
+    	      <span class="btn btn-success" id="saveGrid" type="submit"><@spring.message "hap.save"/></span>
+    	      <span class="btn btn-success" id="closeWin" type="button"><@spring.message "hap.cancel"/></span>
+	        </div>
+        </form>
+    </div>
+
+<script>
+
+    $("#page-content").kendoValidator();
+    $("#closeWin").click(function(){
+    	if (isedit) {
+            window.parent.$("#editWin").data("kendoWindow").close();
+        } else {
+            window.parent.$("#newWin").data("kendoWindow").close();
+        }
+    });
+    $("#saveGrid").click(function () {
+        if(newViewModel.model.companyCode==''||newViewModel.model.companyCode==null){
+            kendo.ui.showInfoDialog({
+                message:'<@spring.message "company.companyCode"/>不能为空'
+            })
+        }else if(newViewModel.model.companyFullName==''||newViewModel.model.companyFullName==null){
+            kendo.ui.showInfoDialog({
+                message:'<@spring.message "company.companyFullName"/>不能为空'
+            })
+        }else {
+            newViewModel.model.__status = isedit ? 'update' : 'add';
+            Hap.submitForm({
+                url: '${base.contextPath}/fnd/company/update',
+                formModel: newViewModel.model,
+                success: function (data) {
+                    window.parent.$('#grid').data('kendoGrid').dataSource.page(1);
+                    if (isedit) {
+                        window.parent.$("#editWin").data("kendoWindow").close();
+                    } else {
+                        window.parent.$("#newWin").data("kendoWindow").close();
+                    }
+                }
+            });
+        }
+    });
+</script>
+
+</body>
+</html>

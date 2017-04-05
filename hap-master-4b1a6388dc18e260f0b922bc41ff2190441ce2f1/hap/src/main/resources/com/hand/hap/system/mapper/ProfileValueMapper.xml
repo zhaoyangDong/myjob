@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ #{copyright}#
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hand.hap.system.mapper.ProfileValueMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hap.system.dto.ProfileValue"
+               extends="com.hand.hap.mapper.StdMapper.STD">
+        <id column="PROFILE_VALUE_ID" jdbcType="DECIMAL" property="profileValueId"/>
+        <result column="PROFILE_ID" jdbcType="DECIMAL" property="profileId"/>
+        <result column="LEVEL_ID" jdbcType="DECIMAL" property="levelId"/>
+        <result column="LEVEL_VALUE" jdbcType="VARCHAR" property="levelValue"/>
+        <result column="LEVEL_NAME" jdbcType="VARCHAR" property="levelName"/>
+        <result column="PROFILE_VALUE" jdbcType="VARCHAR" property="profileValue"/>
+    </resultMap>
+
+
+    <sql id="Example_Where_Clause">
+        <where>
+            <foreach collection="oredCriteria" item="criteria" separator="or">
+                <if test="criteria.valid">
+                    <trim prefix="(" prefixOverrides="and" suffix=")">
+                        <foreach collection="criteria.criteria" item="criterion">
+                            <choose>
+                                <when test="criterion.noValue">
+                                    and ${criterion.condition}
+                                </when>
+                                <when test="criterion.singleValue">
+                                    and ${criterion.condition} #{criterion.value}
+                                </when>
+                                <when test="criterion.betweenValue">
+                                    and ${criterion.condition} #{criterion.value} and #{criterion.secondValue}
+                                </when>
+                                <when test="criterion.listValue">
+                                    and ${criterion.condition}
+                                    <foreach close=")" collection="criterion.value" item="listItem" open="("
+                                             separator=",">
+                                        #{listItem}
+                                    </foreach>
+                                </when>
+                            </choose>
+                        </foreach>
+                    </trim>
+                </if>
+            </foreach>
+        </where>
+    </sql>
+    <sql id="Base_Column_List">
+    PROFILE_VALUE_ID, PROFILE_ID, LEVEL_ID, LEVEL_VALUE, PROFILE_VALUE, OBJECT_VERSION_NUMBER, 
+    REQUEST_ID, PROGRAM_ID, CREATION_DATE, CREATED_BY, LAST_UPDATED_BY, LAST_UPDATE_DATE, 
+    LAST_UPDATE_LOGIN, ATTRIBUTE_CATEGORY, ATTRIBUTE1, ATTRIBUTE2, ATTRIBUTE3, ATTRIBUTE4, 
+    ATTRIBUTE5, ATTRIBUTE6, ATTRIBUTE7, ATTRIBUTE8, ATTRIBUTE9, ATTRIBUTE10, ATTRIBUTE11, 
+    ATTRIBUTE12, ATTRIBUTE13, ATTRIBUTE14, ATTRIBUTE15
+  </sql>
+    <select id="selectLevelValuesForUser" resultMap="BaseResultMap" parameterType="com.hand.hap.system.dto.ProfileValue">
+      SELECT su.user_name level_Name,su.user_id level_Value,'30' level_Id
+      FROM sys_user su
+      <where>
+        <if test="levelName != null">
+            AND su.user_name LIKE concat('%', concat(#{levelName,jdbcType=VARCHAR}, '%'))
+        </if>
+        <if test="levelValue != null">
+            AND su.user_id LIKE concat('%', concat(#{levelValue,jdbcType=VARCHAR}, '%'))
+        </if>
+      </where>
+      ORDER BY  su.user_id
+   </select>
+    <select id="selectLevelValuesForRole" resultMap="BaseResultMap" parameterType="com.hand.hap.system.dto.ProfileValue">
+        select sr.role_code level_Name,sr.role_id level_Value, '20' level_Id
+        from sys_role_b sr
+        <where>
+            <if test="levelName != null">
+                AND sr.role_code LIKE concat('%', concat(#{levelName,jdbcType=VARCHAR}, '%'))
+            </if>
+            <if test="levelValue != null">
+                AND sr.role_id  LIKE concat('%', concat(#{levelValue,jdbcType=VARCHAR}, '%'))
+            </if>
+        </where>
+         ORDER BY  sr.role_Id
+   </select>
+
+
+    <select id="selectProfileValues" resultMap="BaseResultMap" parameterType="com.hand.hap.system.dto.ProfileValue">
+        select t.PROFILE_VALUE_ID, t.PROFILE_ID, t.LEVEL_ID, t.LEVEL_VALUE, t.PROFILE_VALUE, t.OBJECT_VERSION_NUMBER, t.
+        REQUEST_ID, t.PROGRAM_ID, t.CREATION_DATE, t.CREATED_BY, t.LAST_UPDATED_BY, t.LAST_UPDATE_DATE, t.
+        LAST_UPDATE_LOGIN, t.ATTRIBUTE_CATEGORY, t.ATTRIBUTE1, t.ATTRIBUTE2, t.ATTRIBUTE3, t.ATTRIBUTE4, t.
+        ATTRIBUTE5, t.ATTRIBUTE6, t.ATTRIBUTE7, t.ATTRIBUTE8, t.ATTRIBUTE9, t.ATTRIBUTE10, t.ATTRIBUTE11, t.
+        ATTRIBUTE12, t.ATTRIBUTE13, t.ATTRIBUTE14, t.ATTRIBUTE15,(
+        CASE
+        WHEN t.LEVEL_id='30'
+        THEN
+        (SELECT su.user_name level_Name
+        FROM sys_user su
+        WHERE su.user_id=t.LEVEL_VALUE
+        )
+        WHEN t.LEVEL_id='20'
+        THEN
+        (SELECT sr.role_code level_Name
+        FROM sys_role_b sr
+        WHERE sr.role_id=t.LEVEL_VALUE
+        )
+        WHEN t.LEVEL_id='10'
+        THEN t.LEVEL_VALUE
+        END ) level_name
+        from SYS_PROFILE_VALUE t
+        <where>
+            <if test="profileValueId != null">
+                t.profile_value_id = #{profileValueId,jdbcType=DECIMAL}
+            </if>
+            <if test="profileId != null">
+                AND t.profile_id = #{profileId,jdbcType=DECIMAL}
+            </if>
+            <if test="levelId != null">
+                AND t.level_id = #{levelId,jdbcType=DECIMAL}
+            </if>
+            <if test="levelValue != null">
+                AND t.level_value = #{levelValue,jdbcType=VARCHAR}
+            </if>
+            <if test="profileValue != null">
+                AND t.profile_value = #{profileValue,jdbcType=VARCHAR}
+            </if>
+        </where>
+        order by t.profile_value_id
+    </select>
+
+
+    <delete id="deleteByProfileId" parameterType="com.hand.hap.system.dto.ProfileValue">
+    delete from SYS_PROFILE_VALUE
+    where PROFILE_ID = #{profileId,jdbcType=DECIMAL}
+  </delete>
+
+    <select id="selectByProfileIdAndUserId" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM sys_profile_value t
+        WHERE profile_id = #{profileId,jdbcType=DECIMAL}
+        AND
+        (
+        (level_id='30' and level_value = #{userId,jdbcType=DECIMAL}) OR
+        (level_id='20' and level_value IN (SELECT role_id FROM sys_user_role WHERE user_id =
+        #{userId,jdbcType=DECIMAL})) OR
+        level_id='10'
+        )
+        ORDER BY level_id DESC,level_value
+    </select>
+
+    <!-- 根据request和profileName按优先级获取配置文件值 -->
+    <select id="selectPriorityValues" resultMap="BaseResultMap" parameterType="java.lang.String">
+	    SELECT spv.profile_value_id,
+	           spv.profile_id,
+	           spv.level_id,
+	           spv.level_value,
+	           spv.profile_value
+	      FROM sys_profile_value spv,
+	      	   sys_profile sp
+	     WHERE spv.profile_id = sp.profile_id
+	       AND sp.profile_name =  #{profileName,jdbcType=VARCHAR}
+	       AND ((spv.level_id = '30' AND spv.level_value = #{request.userId,jdbcType=DECIMAL,javaType=java.lang.Long})
+	           OR (spv.level_id = '20' AND spv.level_value = #{request.roleId,jdbcType=DECIMAL,javaType=java.lang.Long})
+	           OR (spv.level_id = '10'))
+	     ORDER BY spv.level_id DESC
+    </select>
+</mapper>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hap.account.mapper.UserMapper">
+    <resultMap id="BaseResultMap" type="com.hand.hap.account.dto.User" extends="com.hand.hap.mapper.StdMapper.STD">
+        <id column="USER_ID" property="userId" jdbcType="DECIMAL" />
+        <result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+        <result column="USER_TYPE" property="userType" jdbcType="VARCHAR" />
+        <result column="PASSWORD_ENCRYPTED" property="passwordEncrypted" jdbcType="VARCHAR" />
+        <result column="EMAIL" property="email" jdbcType="VARCHAR" />
+        <result column="PHONE" property="phone" jdbcType="VARCHAR" />
+        <result column="START_ACTIVE_DATE" property="startActiveDate" javaType="DATE"/>
+        <result column="END_ACTIVE_DATE" property="endActiveDate" javaType="DATE"/>
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="LAST_PASSWORD_UPDATE_DATE" property="lastPasswordUpdateDate" javaType="DATE"/>
+        <result column="LAST_LOGIN_DATE" property="lastLoginDate" javaType="DATE"/>
+        <result column="FIRST_LOGIN" property="firstLogin" jdbcType="VARCHAR" />
+    </resultMap>
+
+    
+    <sql id="Base_Column_List">
+        USER_ID, USER_NAME,USER_TYPE, PASSWORD_ENCRYPTED, USER_TYPE, EMAIL, PHONE, START_ACTIVE_DATE,
+        END_ACTIVE_DATE, STATUS,LAST_PASSWORD_UPDATE_DATE,LAST_LOGIN_DATE,FIRST_LOGIN
+    </sql>
+
+    <update id="updateBasic" parameterType="com.hand.hap.account.dto.User">
+        update sys_user
+        <set>
+            <if test="userName!=null">
+                user_name = #{userName},
+            </if>
+            <if test="userType!=null">
+                user_type = #{userType},
+            </if>
+            <if test="email!=null">
+                email = #{email},
+            </if>
+            <if test="phone!=null">
+                phone = #{phone},
+            </if>
+            <if test="status!=null">
+                status = #{status},
+            </if>
+            START_ACTIVE_DATE = #{startActiveDate},
+            END_ACTIVE_DATE = #{endActiveDate},
+
+            OBJECT_VERSION_NUMBER = OBJECT_VERSION_NUMBER+1,
+            LAST_UPDATED_BY = #{request.userId},
+            LAST_UPDATE_DATE = current_timestamp
+        </set>
+        where user_id = #{userId}
+    </update>
+
+    <update id="updatePassword">
+        update sys_user u
+        set u.password_encrypted = #{password,jdbcType=VARCHAR},
+            u.LAST_PASSWORD_UPDATE_DATE = current_timestamp
+        where u.user_id = #{userId,jdbcType=DECIMAL}
+    </update>
+
+    <update id="updateFirstLogin">
+        update sys_user u
+        set u.first_login = #{status,jdbcType=VARCHAR}
+        where u.user_id = #{userId,jdbcType=DECIMAL}
+    </update>
+
+    <select id="selectByUserName" resultMap="BaseResultMap" parameterType="java.lang.String">
+        select 
+        <include refid="Base_Column_List" />,
+        <include refid="com.hand.hap.mapper.StdMapper.Base_Column_List"/>
+        from SYS_USER
+        where upper(USER_NAME) = upper(#{userName,jdbcType=VARCHAR})
+    </select>
+    
+    <select id="selectByIdList" resultMap="BaseResultMap">
+        select
+        USER_ID, EMAIL, USER_NAME
+        from SYS_USER
+        where USER_ID in
+        <foreach collection="list" open="(" separator="," close=")" item="userId" index="index">
+            #{userId,jdbcType=DECIMAL}
+        </foreach>
+    </select>
+
+</mapper>

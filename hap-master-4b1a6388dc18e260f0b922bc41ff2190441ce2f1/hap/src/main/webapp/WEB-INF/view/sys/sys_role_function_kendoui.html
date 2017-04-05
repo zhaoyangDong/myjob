@@ -1,0 +1,303 @@
+<#-- * description: 角色界面 * version: 1.0 *author:hailin.xu@hand-china.com
+* #{copyright}# * --> <#include "../include/header.html">
+<body>
+	<script src="${base.contextPath}/common/language?var=languageData" type="text/javascript"></script>
+	<div id="tipDelete"></div>
+	<div id="dialog"></div>
+	<div id="content-container">
+		<div id="page-content">
+			<div class="panel" style="padding:0px;">
+				<form class="form-horizontal">
+					<div class="panel-body">
+
+						<!-- roleCode -->
+						<div class="col-sm-6">
+							<div class="form-group">
+								<label class="col-sm-3 control-label"><@spring.message
+									"function.functionname"/></label>
+								<div class="col-sm-9">
+									<input type="text" id="role" style="width:100%"   data-bind="value:model.roleId,text:model.roleName"
+										>
+								</div>
+							</div>
+						</div>
+						<!-- roleCode  end-->
+					</div>
+					<div class="panel-footer text-right">
+						<span class="btn btn-success"  data-bind="click:queryResource"
+							type="submit"><@spring.message "hap.query"/></span>
+					   <span class="btn btn-success"  onclick="saveRole()"><@spring.message "hap.save"/></span>
+					</div>
+					<!-- end panel-footer -->
+				</form>
+			</div>
+			<div id="toolbar"></div>
+			<div id="grid" style="clear:both" class="table"></div>
+		</div>
+	</div>
+
+    <script type="text/x-kendo-template" id="resourceitem">
+    # if (!data.hasChildren) { #
+        <a href="\\#" onclick="assignResourceItem(' + item.id + ')"><@spring.message "hap.edit"/></a>
+    # } #
+    </script>
+  
+	<script type="text/javascript">
+	
+	         
+		    function treelist(arr,childrens,parentId){
+		        for(var i =0;i<childrens.length;i++){
+		    	    childrens[i].parentId=parentId;
+		    	    childrens[i].hasChildren=true;
+		            arr.push(childrens[i])
+		            if(childrens[i].children){
+		                treelist(arr,childrens[i].children,childrens[i].id);
+		            }else{
+			            childrens[i].hasChildren=false;
+		            }
+		        }
+		    }
+		   
+		    function saveRole() {
+		        var map = viewModel.model.toJSON();
+		        if (!map.roleId) {	 
+		            var dialog =  $("#dialog").kendoWindow({
+			            actions: ["Close"],
+			            width: 300,
+			            height: 150,
+			            title: '<@spring.message "msg.info.rolefunction.select_role"/>', 
+			            visible: false,
+			            iframe: true
+			        }).data("kendoWindow");
+			        dialog.center().open();
+		            return;
+		        }
+		       
+		        var checkedList = treeList.dataSource.data();
+		        var datas = [];
+		        if (checkedList.length > 0) {
+		            for (var i = 0; i < checkedList.length; i++) {
+		                if (checkedList[i].ischecked) {
+		                    datas.push({
+			                    roleId    : map.roleId,
+			                    functionId: checkedList[i].id
+			                })
+		                } 
+		            }
+		            $.ajax({
+		                url        : "${base.contextPath}/sys/rolefunction/submit",
+		                type       : "POST",
+		                dataType   : "json",
+		                contentType: "application/json",
+		                data       : kendo.stringify(datas),
+		                success    : function (json) {         
+		                }
+		            });
+		        }
+		    }
+		 // $(document).ready(function() {
+			 
+			function assignResourceItem(id) {
+		        var fd = treeList.dataSource.data();
+		        var dialog =  $("#dialog").kendoWindow({
+		            actions: [ "Maximize", "Minimize", "Close"],
+		            width: 720,
+		            height: 550,
+		            title: '<@spring.message "job.schedulenewjob"/>', 
+		            visible: false,
+		            iframe: true,  
+		            content: 'sys_role_resource_item_kendoui.html?functionId=' + id + '&roleId=' + fd.roleId
+		        }).data("kendoWindow");
+		        dialog.center().open();
+		    }
+			  
+			$("#role").kendoLov(${lovProvider.getLov(base.contextPath, base.locale, "LOV_ROLE")})  
+			viewModel = kendo.observable({
+				model : {
+				    roleId: ${Session.roleId}
+			    },
+				queryResource : function(e) {	
+					$('#grid').data('kendoTreeList').dataSource.read();
+				}
+			});
+
+			kendo.bind($('#page-content'), viewModel);
+
+			$.ajax({
+	            url    : '${base.contextPath}/sys/role/query',
+	            data   : {
+	                roleId : ${Session.roleId}
+	            },
+	            success: function (json) {
+	                if (json.success) {
+	                    var row = json.rows[0] || {};
+	                    viewModel.model.set("roleName",row.roleName);
+	                }
+	            }
+	        });
+			
+			
+			var crudServiceBaseUrl = '${base.contextPath}/sys/rolefunction',
+			dataSource = new kendo.data.TreeListDataSource({
+		        transport : {
+					read : {
+						url : crudServiceBaseUrl+ "/query",
+						type : "POST",
+						dataType : "json"
+					},
+					create : {
+						url : crudServiceBaseUrl+ "/submit",
+						contentType : "application/json",
+						type : "POST"
+					},
+					update : {
+						url : crudServiceBaseUrl+ "/submit",
+						contentType : "application/json",
+						type : "POST"
+					},
+					destroy : {
+						url : crudServiceBaseUrl+ "/remove",
+						contentType : "application/json",
+						type : "POST"
+					},
+					parameterMap : function(options,type) {
+						if (type !== "read"	&& options.models) {
+						    var datas = options.models
+							if (type == 'create'|| type == 'update') {
+							    datas = options.models.map(function(data) {
+								    data['__status'] = (type == 'create' ? 'add' : 'update');
+								    return data;
+							    })
+							}
+							return kendo.stringify(datas);
+						} else if (type === "read") {
+							var map = viewModel.model.toJSON();
+							for ( var k in map) {
+								if (map[k] === ''|| map[k] === null|| map[k] === undefined)
+									delete map[k]
+							}
+							    return map;
+						}
+					}
+				},
+				requestEnd : function(e) {
+					var response = e.response;
+					if(!response)
+						return;
+					var datas = [];
+						treelist(datas, response.rows||[],null);
+						response.rows = datas;	  
+				},
+				batch   : true,
+				schema  : {
+					data  : 'rows',
+					model : {
+					    id      : "id",
+					    parentId:'parentId',
+						fields  : {
+							url : {type : "string"},
+							text: {type :"string"}
+						} ,
+						expanded: true
+					},
+					errors : function(res) {
+						if (!res.success && res.message) {
+							return res.message;
+						}
+					} 
+				}, 
+				error : function(e) {
+					alert(e.errors)
+				},
+				change: function propagate(e) {
+					var node = e.items && e.items[0];
+					var propagatedField = "ischecked";
+
+					if (!node || e.field != propagatedField) {
+					    return;
+					}
+                     
+					this.unbind("change", propagate);
+                    function update(dataSource, nodes, field, state) {
+						for (var i = 0; i < nodes.length; i++) {
+						     nodes[i].set(field, state);
+                             update(dataSource, dataSource.childNodes(nodes[i]), field, state);
+					    }
+					}
+
+					update(this, this.childNodes(node), propagatedField, node[propagatedField]);
+
+					this.bind("change", propagate);
+				}
+			});
+ 	           
+			$("#toolbar").kendoToolBar({
+				items : [ {
+					type : "button",
+					id   : "expand",
+					text : '<@spring.message "hap.expand"/>'
+				}, {
+				    type : "button",
+					id : "collapse",
+					text : '<@spring.message "hap.collapse"/>'
+				}]
+			});
+							
+			var treeList  = $("#grid").kendoTreeList({
+			    dataSource : dataSource,
+				navigatable : true,
+				resizable : true,
+				scrollable : false,
+				editable : false,
+						
+				columns : [{
+				    field : "text",
+					title : '<@spring.message "function.functionname"/>',
+					width : 250
+				},{
+                    template: "<input type='checkbox' id='checkbox' data-bind='checked: ischecked' />",
+                    width: 32,
+                    attributes: {
+				        "class": "table-cell",
+					    style: "text-align: center;"
+					}
+                },{
+					field : "url",
+					title : '<@spring.message "hap.comment"/>',
+					width : 270
+				}],
+				dataBound: function() {
+					var view = this.dataSource.view();
+					this.items().each(function(index, row) {
+					    kendo.bind(row, view[index]);
+				    });
+			    }
+			}).data("kendoTreeList");  
+
+	
+            var expand = $("#expand").kendoButton({
+				click : function(e) {
+				    var tree=treeList.dataSource.data();
+					for(var i=0;i<tree.length;i++){
+					    if(tree[i].hasChildren){
+						    treeList.expand(tree[i]);
+						}
+					}
+                }
+			}).data("kendoButton");
+
+			var collapse = $("#collapse").kendoButton({
+		        click : function(e) {
+				    var tree=treeList.dataSource.data();
+					    for(var i=0;i<tree.length;i++){
+						    if(tree[i].hasChildren){
+								treeList.collapse(tree[i]);
+							}
+						}
+					}
+		    }).data("kendoButton");
+				   
+		//	}); 
+	</script>
+</body>
+</html>

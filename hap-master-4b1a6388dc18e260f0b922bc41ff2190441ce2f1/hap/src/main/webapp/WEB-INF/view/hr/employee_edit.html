@@ -1,0 +1,260 @@
+<#-- 
+ * description: 员工管理编辑对话框
+ * version: 2.0 
+ * author:yuliao.chen@hand-china.com 
+ *
+ -->
+<#include "../include/header.html">
+
+<body>
+<script src="http://cdn.bootcss.com/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+<script src="${base.contextPath}/common/code?employeeStatusData=HR.EMPLOYEE_STATUS" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?employeeGenderData=HR.EMPLOYEE_GENDER" type="text/javascript"></script>
+<script type="text/javascript">
+	
+	var viewModel = kendo.observable({
+		model: {},
+		source:employeeGenderData,
+		save: function(e){
+			
+			var data= viewModel.model.toJSON();
+        	//转换启用状态
+        	data.enabledFlag = data.enabledFlag?'Y':'N';
+        	
+        	//确定是添加还是更新
+        	if(data.employeeId){
+        		data.__status = "update";
+        	}else{
+        		data.__status = "add";
+        	}
+
+			var validator = $("#mainform").data("kendoValidator");
+			if (validator.validate()) {
+				//var data= viewModel.model.toJSON();
+				$.ajax({
+                    type   : 'POST',
+                    url    : '${base.contextPath}/hr/employee/submit',
+                    dataType : "json",
+                    contentType : "application/json",
+                    data   : kendo.stringify([data]),
+                    success: function (data) {
+                    	if(data.success==false){
+                    		kendo.ui.showErrorDialog({
+                                message:data.message
+                            });
+                    	}	
+                    	else{
+	                        window.parent.$("#dialog").data("kendoWindow").close();
+                        }
+                    }
+                });
+			}
+		},
+		closeWin: function(e){
+        	window.parent.$("#dialog").data("kendoWindow").close(); 
+        } 
+	});
+
+	//var isedit = '${RequestParameters.employeeId!0}' == '';
+	var employeeId = '${RequestParameters.employeeId!0}';
+	
+	if (employeeId!=0) {
+
+        $.ajax({
+            url: '${base.contextPath}/hr/employee/query?employeeId=${RequestParameters.employeeId!0}',
+            success: function (args) {
+                var a0 = args.rows[0] || {};
+                for (var k in a0) {
+                	if( k === 'enabledFlag'){
+                		viewModel.model.set("enabledFlag",a0.enabledFlag=='Y'?true:false);
+                	}
+                	else {
+                       viewModel.model.set(k, a0[k]);
+                    }
+                }
+            }
+        });
+    }
+    
+</script>
+
+
+
+<div class="container" style="margin-top: 20px;">
+	<div id="page-content">
+	<form id="mainform"  class="form-horizontal" method="post" enctype="application/json;charset=UTF-8">
+
+	<div class="row">
+	  <div class="form-group">
+	 	<div class="col-sm-1">
+	 		<img data-src="holder.js/140x140" class="img-rounded" alt="140x140" src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9InllcyI/PjxzdmcgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB3aWR0aD0iMTQwIiBoZWlnaHQ9IjE0MCIgdmlld0JveD0iMCAwIDE0MCAxNDAiIHByZXNlcnZlQXNwZWN0UmF0aW89Im5vbmUiPjxkZWZzLz48cmVjdCB3aWR0aD0iMTQwIiBoZWlnaHQ9IjE0MCIgZmlsbD0iI0VFRUVFRSIvPjxnPjx0ZXh0IHg9IjQ0LjA1NDY4NzUiIHk9IjcwIiBzdHlsZT0iZmlsbDojQUFBQUFBO2ZvbnQtd2VpZ2h0OmJvbGQ7Zm9udC1mYW1pbHk6QXJpYWwsIEhlbHZldGljYSwgT3BlbiBTYW5zLCBzYW5zLXNlcmlmLCBtb25vc3BhY2U7Zm9udC1zaXplOjEwcHQ7ZG9taW5hbnQtYmFzZWxpbmU6Y2VudHJhbCI+MTQweDE0MDwvdGV4dD48L2c+PC9zdmc+" data-holder-rendered="true" style="width: 90px; height: 90px;">
+	 	</div>
+	 	<div class="col-sm-11" style="float: left;margin-top: 0px;">
+	 	  	<div class="form-group">
+                <label class="col-sm-2 control-label"><@spring.message "employee.employeeCode"/>:</label>
+                <div class="col-sm-4">
+                    <input type="text" required style="width:100%" name="employeeCode" data-bind="value:model.employeeCode" class="k-textbox">
+                </div>
+                <div class="col-sm-6" >  
+                     <span data-for="employeeCode" class=".k-invalid-msg"></span>
+                </div>
+            </div>
+    		
+    		<div class="form-group">
+	            <label class="col-sm-2 control-label"><@spring.message "employee.name"/>:</label>
+	            <div class="col-sm-4">
+	                <input type="text" required style="width:100%" name="name" data-bind="value:model.name" class="k-textbox">
+	            </div>
+	            <div class="col-sm-6" >  
+	                 <span data-for="name" class=".k-invalid-msg"></span>
+	            </div>
+	        </div>
+
+	         <div class="form-group">
+	            <label class="col-sm-2 control-label"><@spring.message "employee.joindate"/>:</label>
+	            <div class="col-sm-4">
+	                <input style="width:100%" name="joinDate" data-bind="value:model.joinDate" class="datepicker">
+	            </div>
+	            <div class="col-sm-6" >  
+	                 <span data-for="joinDate" class=".k-invalid-msg"></span>
+	            </div>
+	        </div>
+
+    	</div>
+
+
+    	<div class="col-sm-12" style="margin-top: 40px;">
+        	<ul class="nav nav-tabs" id="mytab">
+    			<li class="active"><a href="#personal" data-toggle="tab"><@spring.message "employee.personalinfo"/></a></li>
+    			<li class=""><a href="#company" data-toggle="tab"><@spring.message "employee.companyinfo"/></a></li>
+    			<li class=""><a href="#another" data-toggle="tab"><@spring.message "employee.otherinfo"/></a></li>
+    		</ul>
+    		<div id="myTabContent" class="tab-content">
+        		<div class="tab-pane fade in active" style="margin-top: 20px;" id="personal">
+        			
+        			<div class="form-group">
+			            <label class="col-sm-2 control-label"><@spring.message "employee.borndate"/>:</label>
+			            <div class="col-sm-5">
+			                <input style="width:100%" name="bornDate" data-bind="value:model.bornDate" class="datepicker">
+			            </div>
+			            <div class="col-sm-5" >  
+			                 <span data-for="bornDate" class=".k-invalid-msg"></span>
+			            </div>
+			        </div>
+            	
+            		<div class="form-group">
+			            <label class="col-sm-2 control-label"><@spring.message "user.email"/>:</label>
+			            <div class="col-sm-5">
+			                <input type="email" validationMessage='<@spring.message "hap.validation.email"/>' style="width:100%" name="email" data-bind="value:model.email" class="k-textbox">
+			            </div>
+			            <div class="col-sm-5" >  
+			                 <span data-for="email" class=".k-invalid-msg"></span>
+			            </div>
+			        </div>
+			        
+			        <div class="form-group">
+			            <label class="col-sm-2 control-label"><@spring.message "employee.mobile"/>:</label>
+			            <div class="col-sm-5">
+			                <input type="text" style="width:100%" name="mobil" data-bind="value:model.mobil" class="k-textbox">
+			            </div>
+			            <div class="col-sm-5" >  
+			                 <span data-for="mobil" class=".k-invalid-msg"></span>
+			            </div>
+			        </div>
+			        
+ 					<div class="form-group">
+			            <label class="col-sm-2 control-label"><@spring.message "employee.certificateid"/>:</label>
+			            <div class="col-sm-5">
+			                <input type="text" required style="width:100%" name="certificateId" data-bind="value:model.certificateId" class="k-textbox">
+			            </div>
+			            <div class="col-sm-5" >  
+			                 <span data-for="certificateId" class=".k-invalid-msg"></span>
+			            </div>
+			        </div>
+			        
+        			<div class="form-group">
+			            <label class="col-sm-2 control-label"><@spring.message "employee.gender"/>:</label>
+			            <div class="col-sm-2">
+			                <input style="width:100%" required name="gender" id="gender" data-bind="value:model.gender" >
+			            </div>
+			            <div class="col-sm-5" >  
+			                 <span data-for="gender" class=".k-invalid-msg"></span>
+			            </div>
+			        </div>
+			        
+			        <div class="form-group">
+			            <label class="col-sm-2 control-label"><@spring.message "employee.status"/>:</label>
+			            <div class="col-sm-2">
+			                <input required style="width:100%" name="status" id="status" data-bind="value:model.status" >
+			            </div>
+			            <div class="col-sm-5" >  
+			                 <span data-for="status" class=".k-invalid-msg"></span>
+			            </div>
+			        </div>
+			        
+			        <div class="form-group">
+                        <label class="col-sm-2 control-label"><@spring.message "employee.enabledflag"/>:</label>
+                        <div class="col-sm-3" style="text-align: left">
+                            <input type="checkbox" class="chkbx" style="margin-top:8px"  name="enabledFlag" data-bind="checked:model.enabledFlag" >
+                        </div>
+                    </div>
+        			
+        		</div>
+        		<div class="tab-pane fade" style="margin-top: 20px;" id="company">
+           		 	<div style="margin-top: 20px; col-sm-2">
+        				<p><@spring.message "employee.companyinfo"/></p>
+        			</div>
+        		</div>
+        		<div class="tab-pane fade" id="another">
+        			<div style="margin-top: 20px; col-sm-2">
+        				<p><@spring.message "employee.otherinfo"/></p>
+        			</div>
+        		</div>
+            </div>
+    	</div>
+	  </div>
+	</div>
+	<div class="text-right" style="bottom: 20px;position: fixed; right: 85px; float: left; background: #fff;">
+    	<span class="btn btn-success" data-bind="click:save" type="submit"><@spring.message "hap.save"/></span>
+    	<span class="btn btn-success" data-bind="click:closeWin" type="button"><@spring.message "hap.cancel"/></span>
+	</div>
+
+	</form>
+	</div>
+</div>
+
+<script type="text/javascript">
+	kendo.bind($('#page-content'), viewModel);
+	
+	//验证
+	$("#mainform").kendoValidator({
+    	messages: {
+            required: "required"
+    	}
+    });
+	//日期
+	$(".datepicker").kendoDatePicker({
+		  animation: false
+	});
+	//性别下拉框
+	$("#gender").kendoDropDownList({
+		  dataSource: {
+		    data: employeeGenderData
+		  },
+		  valuePrimitive: true,
+		  dataTextField: "meaning",
+          dataValueField: "value"
+	});
+	//状态栏下拉框
+	$("#status").kendoDropDownList({
+		  dataSource:employeeStatusData,
+		  valuePrimitive: true,
+		  dataTextField: "meaning",
+          dataValueField: "value"
+	});
+	
+</script>
+
+
+</body>
+</html>

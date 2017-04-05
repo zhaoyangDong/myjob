@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ~ #{copyright}#
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper  namespace="com.hand.hap.hr.mapper.EmployeeMapper">
+	<resultMap id="BaseResultMap" type="com.hand.hap.hr.dto.Employee" >
+		<id column="EMPLOYEE_ID" property="employeeId" jdbcType="DECIMAL" />
+		<result column="EMPLOYEE_CODE" property="employeeCode" jdbcType="VARCHAR" />
+        <result column="NAME" property="name" jdbcType="VARCHAR" />
+        <result column="BORN_DATE" property="bornDate" javaType="DATE" />
+        <result column="EMAIL" property="email" jdbcType="VARCHAR" />
+        <result column="MOBIL" property="mobil" jdbcType="VARCHAR"/>
+        <result column="JOIN_DATE" property="joinDate" javaType="DATE"/>
+        <result column="GENDER" property="gender" jdbcType="VARCHAR" />
+        <result column="CERTIFICATE_ID" property="certificateId" jdbcType="VARCHAR" />
+        <result column="STATUS" property="status" jdbcType="VARCHAR" />
+        <result column="ENABLED_FLAG" property="enabledFlag" jdbcType="VARCHAR" />
+	    <result column="POSITION_NAME" property="positionName" jdbcType="VARCHAR" />
+	    <result column="UNIT_NAME" property="unitName" jdbcType="VARCHAR" />
+	
+	</resultMap>	
+	
+	<sql id="Base_Column_List">
+        EMPLOYEE_ID, EMPLOYEE_CODE,NAME, BORN_DATE, EMAIL, MOBIL, JOIN_DATE,GENDER,CERTIFICATE_ID,STATUS,ENABLED_FLAG
+    </sql>
+    <select id="queryAll" resultMap="BaseResultMap" parameterType="com.hand.hap.hr.dto.Employee">
+       SELECT
+		 e1.employee_id,
+		 e1.employee_code,
+		 e1.name,
+		 e1.born_date,
+		 e1.email,
+		 e1.mobil,
+		 e1.join_date,
+		 (
+		  select p1.name  from hr_org_position_b p1
+		   where p1.position_id = ea1.position_id
+		 ) position_name,
+		 (
+		   select 
+		   (
+		    select u1.name from hr_org_unit_b u1
+		    where u1.unit_id = p1.unit_id
+		    )  unit_name   
+		    from hr_org_position_b p1
+		    where p1.position_id = ea1.position_id   
+		 ) unit_name
+	  FROM
+		hr_employee e1 	
+	    LEFT OUTER JOIN hr_employee_assign  ea1 ON (
+		e1.employee_id = ea1.employee_id AND ea1.PRIMARY_POSITION_FLAG='Y')
+     <where>
+         <if test="positionId !=null ">
+              and ea1.position_id = #{positionId}
+         </if>
+         <if test="unitId!=null">
+              and ea1.position_id in (select p1.position_id from hr_org_position_b p1 where p1.unit_id = #{unitId} )
+         </if>
+          <if test="employeeCode!=null">
+                and e1.employee_code LIKE concat('%', concat(#{employeeCode,jdbcType=VARCHAR}, '%'))
+          </if>
+          <if test="name!=null">
+                 and e1.name LIKE concat('%', concat(#{name,jdbcType=VARCHAR}, '%'))
+          </if>
+      </where>
+    </select>
+
+    <select id="queryByCode" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT
+            *
+        FROM
+            hr_employee
+        WHERE
+            upper(employee_code) = upper(#{employeeCode})
+    </select>
+    
+    <select id="getDirector" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT
+            e1.*
+        FROM
+            hr_employee e1 ,
+            hr_org_position_b p1 ,
+            hr_employee_assign a1
+        WHERE
+            a1.POSITION_ID = p1.POSITION_ID
+        AND a1.EMPLOYEE_ID = e1.EMPLOYEE_ID
+        AND p1.POSITION_ID =(
+            SELECT
+                p.PARENT_POSITION_ID
+            FROM
+                hr_org_position_b p ,
+                hr_employee_assign a ,
+                hr_employee e
+            WHERE
+                p.POSITION_ID = a.POSITION_ID
+            AND a.EMPLOYEE_ID = e.EMPLOYEE_ID
+            AND a.PRIMARY_POSITION_FLAG = 'Y'
+            AND e.EMPLOYEE_CODE = #{userId}
+        )
+    </select>
+	
+</mapper>

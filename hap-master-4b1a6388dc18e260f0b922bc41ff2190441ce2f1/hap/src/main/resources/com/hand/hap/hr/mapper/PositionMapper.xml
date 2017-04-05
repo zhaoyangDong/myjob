@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ~ #{copyright}#
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.hand.hap.hr.mapper.PositionMapper" >
+  <resultMap id="BaseResultMap" type="com.hand.hap.hr.dto.Position" extends="com.hand.hap.mapper.StdMapper.STD" >
+    <id column="POSITION_ID" property="positionId" jdbcType="DECIMAL" />
+    <result column="UNIT_ID" property="unitId" jdbcType="DECIMAL" />
+    <result column="UNIT_NAME" property="unitName" jdbcType="VARCHAR" />
+    <result column="POSITION_CODE" property="positionCode" jdbcType="VARCHAR" />
+    <result column="NAME" property="name" jdbcType="VARCHAR" />
+    <result column="DESCRIPTION" property="description" jdbcType="VARCHAR" />
+    <result column="PARENT_POSITION_ID" property="parentPositionId" jdbcType="DECIMAL" />
+    <result column="PARENT_POSITION_NAME" property="parentPositionName" jdbcType="VARCHAR" />
+  </resultMap>
+  <sql id="Base_Column_List" >
+    POSITION_ID, UNIT_ID, POSITION_CODE,NAME,DESCRIPTION,PARENT_POSITION_ID
+  </sql>
+
+    <select id="queryPosition" resultMap="BaseResultMap" parameterType="com.hand.hap.hr.dto.Position">
+       SELECT
+		p1.position_id,
+		p1.unit_id,
+		(
+			SELECT
+				tl_. NAME
+			FROM
+				hr_org_unit_tl tl_
+			WHERE
+				tl_.unit_id = p1.unit_id
+			AND tl_.LANG = #{request.locale,jdbcType=VARCHAR,javaType=java.lang.String}
+		) unit_name,
+		p1.position_code,
+		t. NAME,
+		t.description,
+		p1.parent_position_id,
+		(
+			SELECT
+				tl_1. NAME
+			FROM
+				hr_org_position_tl tl_1
+			WHERE
+				tl_1.position_id = p1.parent_position_id
+			AND tl_1.LANG = #{request.locale,jdbcType=VARCHAR,javaType=java.lang.String}
+		) parent_position_name
+	FROM
+		hr_org_position_b p1
+	LEFT OUTER JOIN hr_org_position_tl t ON (
+		p1.position_id = t.POSITION_ID
+		AND t.LANG = #{request.locale,jdbcType=VARCHAR,javaType=java.lang.String})  
+     <where>
+         <if test="positionId!=null">
+              and p1.position_id =#{positionId}
+         </if>
+         <if test="unitId!=null">
+             and p1.unit_id =#{unitId}
+         </if>
+          <if test="positionCode!=null">
+                and p1.position_code LIKE concat('%', concat(#{positionCode,jdbcType=VARCHAR}, '%'))
+          </if>
+          <if test="name!=null">
+                 and t.name LIKE concat('%', concat(#{name,jdbcType=VARCHAR}, '%'))
+          </if>
+          <if test="description!=null">
+                and t.description LIKE concat('%', concat(#{description,jdbcType=VARCHAR}, '%'))
+          </if>
+          <if test="parentPositionId!=null">
+              and p1.parent_position_id =#{parentPositionId}
+         </if>
+      </where>
+      <if test="sortname !=null">
+          <bind name="_colName" value="@com.hand.hap.mybatis.util.OGNL@unCamel(sortname)"/>
+          order by p1.${_colName} ${sortorder}
+      </if>
+      <if test="sortname ==null">
+          order by p1.position_id asc
+      </if>
+    </select>
+    
+    <select id="getPositionByCode" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT
+            p.position_id ,
+            p.unit_id ,
+            p.position_code ,
+            t. NAME ,
+            t.description ,
+            p.parent_position_id
+        FROM
+            hr_org_position_b p
+        LEFT OUTER JOIN hr_org_position_tl t ON(
+            p.POSITION_id = t.POSITION_ID
+            AND t.LANG = #{request.locale,jdbcType=VARCHAR,javaType=java.lang.String})
+
+        WHERE
+            p.position_code = #{positionCode}
+    </select>
+
+    <select id="getPositionByEmployeeCode" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT
+            p.position_id ,
+            p.unit_id ,
+            p.position_code ,
+            t. NAME ,
+            t.description ,
+            p.parent_position_id
+        FROM
+            hr_org_position_b p
+        LEFT OUTER JOIN hr_org_position_tl t ON(
+            p.POSITION_id = t.POSITION_ID
+            AND t.LANG = #{request.locale,jdbcType=VARCHAR,javaType=java.lang.String})
+
+        WHERE
+            p.position_id IN(
+                SELECT DISTINCT
+                    (a.position_id)
+                FROM
+                    hr_employee_assign a ,
+                    hr_employee e
+                WHERE
+                    a.employee_id = e.employee_id
+                AND e.employee_code = #{employeeCode}
+
+            )
+    </select>
+</mapper>

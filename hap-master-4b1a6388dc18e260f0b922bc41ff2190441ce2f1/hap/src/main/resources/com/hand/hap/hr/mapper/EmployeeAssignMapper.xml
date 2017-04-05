@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  ~ #{copyright}#
+  -->
+
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper  namespace="com.hand.hap.hr.mapper.EmployeeAssignMapper">
+	<resultMap id="BaseResultMap" type="com.hand.hap.hr.dto.EmployeeAssign" >
+		<id column="ASSIGN_ID" property="assignId" jdbcType="DECIMAL" />
+		<result column="EMPLOYEE_ID" property="employeeId" jdbcType="DECIMAL" />
+		<result column="POSITION_ID" property="positionId" jdbcType="DECIMAL" />
+        <result column="ENABLED_FLAG" property="enabledFlag" jdbcType="VARCHAR" />
+        <result column="PRIMARY_POSITION_FLAG" property="primaryPositionFlag" jdbcType="VARCHAR" />
+	    <result column="POSITION_NAME" property="positionName" jdbcType="VARCHAR" />
+	    <result column="UNIT_NAME" property="unitName" jdbcType="VARCHAR" />
+	
+	</resultMap>
+
+    <select id="selectByEmployeeId" resultMap="BaseResultMap" parameterType="java.lang.Long">
+        SELECT
+            pu.unit_id ,
+            pu.position_name ,
+            pu.unit_name ,
+            a.*
+        FROM
+            hr_employee_assign a ,
+            (
+                SELECT
+                    p.POSITION_ID ,
+                    pt. NAME POSITION_NAME ,
+                    u.UNIT_ID ,
+                    ut. NAME unit_name
+                FROM
+                    hr_org_position_b p
+                LEFT OUTER JOIN hr_org_position_tl pt ON(
+                    p.POSITION_ID = pt.POSITION_ID
+                    AND pt.LANG = #{request.locale,jdbcType=VARCHAR,javaType=java.lang.String}
+                ) ,
+                hr_org_unit_b u
+            LEFT OUTER JOIN hr_org_unit_tl ut ON(
+                u.UNIT_ID = ut.UNIT_ID
+                AND ut.LANG = #{request.locale,jdbcType=VARCHAR,javaType=java.lang.String}
+            )
+            WHERE
+                p.UNIT_ID = u.UNIT_ID
+            ) pu
+        WHERE
+            a.POSITION_ID = pu.position_id
+        AND a.EMPLOYEE_ID = #{employeeId}
+    </select>
+
+    <delete id="deleteByEmployeeId" parameterType="java.lang.Long">
+      delete from hr_employee_assign
+      where employee_id=#{employeeId}
+    </delete>
+
+	
+</mapper>

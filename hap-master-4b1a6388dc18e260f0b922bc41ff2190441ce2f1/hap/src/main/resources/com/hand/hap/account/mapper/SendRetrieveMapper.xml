@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hand.hap.account.mapper.SendRetrieveMapper">
+  <resultMap id="BaseResultMap" type="com.hand.hap.account.dto.SendRetrieve">
+    <result column="USER_ID" jdbcType="DECIMAL" property="userId" />
+    <result column="RETRIEVE_TYPE" jdbcType="VARCHAR" property="retrieveType" />
+    <result column="RETRIEVE_DATE" jdbcType="TIMESTAMP" property="retrieveDate" />
+    <result column="OBJECT_VERSION_NUMBER" jdbcType="DECIMAL" property="objectVersionNumber" />
+    <result column="REQUEST_ID" jdbcType="DECIMAL" property="requestId" />
+    <result column="PROGRAM_ID" jdbcType="DECIMAL" property="programId" />
+    <result column="CREATION_DATE" jdbcType="TIMESTAMP" property="creationDate" />
+    <result column="CREATED_BY" jdbcType="DECIMAL" property="createdBy" />
+    <result column="LAST_UPDATED_BY" jdbcType="DECIMAL" property="lastUpdatedBy" />
+    <result column="LAST_UPDATE_DATE" jdbcType="TIMESTAMP" property="lastUpdateDate" />
+    <result column="LAST_UPDATE_LOGIN" jdbcType="DECIMAL" property="lastUpdateLogin" />
+    
+    <result column="EMAIL" jdbcType="VARCHAR" property="email" />
+    <result column="PHONE_NO" jdbcType="VARCHAR" property="phoneNo" />
+  </resultMap>
+  <insert id="insertRecord" parameterType="com.hand.hap.account.dto.SendRetrieve">
+    insert into SYS_ACCOUNT_RETRIEVE (USER_ID, RETRIEVE_TYPE, RETRIEVE_DATE, 
+      OBJECT_VERSION_NUMBER, REQUEST_ID, PROGRAM_ID, 
+      CREATION_DATE, CREATED_BY, LAST_UPDATED_BY, 
+      LAST_UPDATE_DATE, LAST_UPDATE_LOGIN)
+    values (#{userId,jdbcType=DECIMAL},'NAME', #{retrieveDate,jdbcType=TIMESTAMP}, 
+      1, #{requestId,jdbcType=DECIMAL}, #{programId,jdbcType=DECIMAL}, 
+      CURRENT_TIMESTAMP, #{createdBy,jdbcType=DECIMAL}, #{lastUpdatedBy,jdbcType=DECIMAL}, 
+      CURRENT_TIMESTAMP, #{lastUpdateLogin,jdbcType=DECIMAL})
+  </insert>
+  
+  <select id="query" resultType="java.lang.Integer" parameterType="com.hand.hap.account.dto.SendRetrieve">
+     SELECT 
+         COUNT(1)
+     FROM 
+         sys_user             su,
+         sys_account_retrieve sat
+     where su.user_id=sat.user_id
+     and sat.RETRIEVE_DATE = #{retrieveDate,jdbcType=TIMESTAMP}
+     <if test="email != null">
+        and su.email= #{email,jdbcType=VARCHAR}
+     </if>
+     <if test="phoneNo != null">
+        and su.phone_no =#{phoneNo,jdbcType=VARCHAR}
+     </if>
+  </select>
+
+</mapper>

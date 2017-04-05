@@ -1,0 +1,99 @@
+<#--
+* description: 流程运行状态界面
+*author:jialong.zuo@hand-china.com
+* version: 1.0
+*
+-->
+<#include "../include/header.html">
+<script>
+    viewModel = kendo.observable({
+        model: {}
+    });
+
+    $.ajax({
+        url: "${base.contextPath}/runtime/process-instances/${RequestParameters.processInstanceId!0}",
+        success: function (args) {
+            processInstance = args;
+            viewModel.model.set("id2", args["id"]);
+            $("#id2").text(viewModel.model.id2);
+            viewModel.model.set("businessKey", args["businessKey"]);
+            $("#businessKey").text(viewModel.model.businessKey);
+            viewModel.model.set("suspended", args["suspended"]);
+            $("#suspended").text(viewModel.model.suspended);
+            viewModel.model.set("ended", args["ended"]);
+            $("#ended").text(viewModel.model.ended);
+            viewModel.model.set("processDefinitionId", args["processDefinitionId"]);
+        }
+    });
+</script>
+
+<div id="content-container">
+    <div id="page-content" style="margin-bottom:50px;">
+        <div class="panel" style="padding: 0px;border: none;box-shadow: none;">
+            <header class="unselectable">预览图</header>
+            <div class="panel-body">
+                <embed type="image/svg+xml" src="${base.contextPath}/wfl/runtime/process-instances/${RequestParameters.processInstanceId}/diagram"/>
+            </div>
+            <header class="unselectable"></header>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="form-group">
+                        <div class="col-sm-2">
+                            <a class="btn btn-primary" onclick="showDialog()">查看流程定义</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form class="form-horizontal" id="task-info-form">
+                <header class="unselectable">流程信息</header>
+                <div class="panel-body">
+                    <div class="row">
+                        <div class="form-group">
+                            <label class="col-sm-1 control-label">流程实例 ID</label>
+                            <div class="col-sm-2">
+                                <label id="id2" class="td-value control-label"></label>
+                            </div>
+                            <label class="col-sm-1 control-label">业务主键</label>
+                            <div class="col-sm-2">
+                                <label id="businessKey" class="td-value control-label"></label>
+                            </div>
+                            <label class="col-sm-1 control-label">挂起</label>
+                            <div class="col-sm-2">
+                                <label id="suspended" class="td-value control-label"></label>
+                            </div>
+                            <label class="col-sm-1 control-label">已结束</label>
+                            <div class="col-sm-2">
+                                <label id="ended" class="td-value control-label"></label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+
+
+        </form>
+    </div>
+
+</div>
+</div>
+
+<div id="procDefWin" style="display: none"></div>
+<script>
+    function showDialog() {
+        $("#procDefWin").kendoWindow({
+            actions: ["Close"],
+            title: "流程定义",
+            draggable: true,
+            height: "500px",
+            width: "800px",
+            content: "${base.contextPath}/activiti/process_definition_detail.html?processDefinitionId=" + viewModel.model.processDefinitionId,
+            iframe: true
+            // modal: true
+        });
+        var win = $("#procDefWin").data("kendoWindow");
+        win.center().open();
+    }
+</script>
+</body>
+</html>

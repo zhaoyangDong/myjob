@@ -1,0 +1,91 @@
+<html>
+<head></head>
+<body style="padding: 10px;">
+
+<form id="addRoleRequestForm"></form>
+
+
+<script type="text/javascript">
+
+    function saveRole() {
+        if (!addRoleRequestForm.valid()) {
+            Hap.showInvalid(addRoleRequestForm);
+            return;
+        }
+        var roleData = addRoleRequestForm.getData();
+        roleData.__status = 'add';
+        $.ajax({
+            url        : '${base.contextPath}/sys/role/submit',
+            type       : "POST",
+            dataType   : "json",
+            contentType: "application/json",
+            data       : JSON2.stringify([roleData]),
+            success    : function (args) {
+                if (!args.success) {
+                    Hap.showError(args.message);
+                    return;
+                }
+                var roleId = args.rows[0].roleId;
+                if (!roleId) {
+                    Hap.showError("No BusinessKey available.");
+                    return;
+                }
+                startProcess(roleId);
+            }
+        });
+    }
+
+    function startProcess(roleId) {
+        var para = {
+            processDefinitionKey: 'addRoleRequest',
+            businessKey         : roleId,
+            variables           : []
+        };
+
+        $.ajax({
+            url        : '${base.contextPath}/wfl/runtime/process-instances',
+            type       : "POST",
+            dataType   : "json",
+            contentType: "application/json",
+            data       : JSON2.stringify(para),
+            success    : function (args) {
+                Hap.showAutoCloseMessage();
+            }
+        });
+    }
+
+    $(function () {
+
+        window['addRoleRequestForm'] = $("#addRoleRequestForm").ligerForm({
+            fields    : [
+                {
+                    label   : '角色名',
+                    name    : 'roleName',
+                    validate: {
+                        required: true
+                    }
+                },
+                {
+                    label   : '角色代码',
+                    name    : 'roleCode',
+                    validate: {
+                        required: true
+                    }
+                },
+                {
+                    label: '角色描述',
+                    name : 'roleDescription'
+                }
+            ], buttons: [
+                {
+                    text : "提交申请",
+                    click: saveRole
+                }
+            ]
+        });
+
+
+    })
+</script>
+</body>
+</html>

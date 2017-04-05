@@ -1,0 +1,770 @@
+<#-- 
+ * description: 员工管理
+ * version: 2.0 
+ * author:yuliao.chen@hand-china.com 
+ *
+ -->
+<#include "../include/header.html">
+<body>
+<script src="${base.contextPath}/common/code?employeeStatusData=HR.EMPLOYEE_STATUS" type="text/javascript"></script>
+<script src="${base.contextPath}/common/code?employeeGenderData=HR.EMPLOYEE_GENDER" type="text/javascript"></script>
+<script type="text/javascript">
+
+
+    var viewModel = kendo.observable({
+        model: {},
+        createFunction: function () {
+            editData();
+        },
+        saveFunction: function () {
+            $('#grid').data('kendoGrid').saveChanges();
+        },
+        queryFunction: function (e) {
+            $('#grid').data('kendoGrid').dataSource.page(1);
+        }
+    });
+
+    var userViewModel = kendo.observable({
+        model: {},
+        role: {},
+        saveFunction: function () {
+            var selection = $("#userGrid").data("kendoGrid").dataSource.data();
+                  var users = [];
+            for (var i = 0; i < selection.length; i++) {
+                           var userRole = {};
+                            userRole["roleId"] = selection[i].roleId;
+                            users[i] = userRole;
+            }
+            userViewModel.role.set("userRole",users);
+            userViewModel.model.set("status", userStatus.value());
+            var param = {};
+            param["user"] = userViewModel.model;
+            param["roles"] = userViewModel.role.get("userRole");
+            $.ajax({
+                type: "post",
+                url: "${base.contextPath}/hr/employee/create_user",
+                data: kendo.stringify(param),
+                dataType: "json",
+                contentType: 'application/json',
+                success: function (data) {
+                    if (data["success"] == true) {
+                        kendo.ui.showInfoDialog({
+                            message: $l('创建成功')
+                        });
+                        $("#createUserWin").data("kendoWindow").close();
+                    } else {
+                        kendo.ui.showInfoDialog({
+                            message: $l('创建失败')
+                        });
+                        $("#createUserWin").data("kendoWindow").close();
+                    }
+                }
+            });
+            onClose();
+        }
+    });
+
+    var roleViewModel = kendo.observable({
+        model: {},
+        queryResource: function () {
+            $('#chooseGrid').data('kendoGrid').dataSource.page(1);
+        }
+    });
+
+    function deleteData() {
+        var checked = grid.selectedDataItems();
+        if (grid.selectedDataItems().length) {
+  kendo.ui.showConfirmDialog({
+                title: $l('hap.tip.info'),
+                message: $l('hap.tip.delete_confirm')
+            }).done(function (event) {
+                if (event.button == 'OK') {
+                    $.each(checked, function (i, v) {
+                        grid.dataSource.remove(v)
+                    })
+                    grid.dataSource.sync();
+                }
+            })
+        }
+    }
+
+
+</script>
+
+
+<!-- 自定义的 编辑/新建 弹框 使用该 window  -->
+<div id="dialog"></div>
+<div id="assign-dialog"></div>
+<div id="page-content">
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+        <span class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;"
+              data-bind="click:createFunction"><i class="fa fa-plus-square" style="margin-right:3px;"></i><@spring.message "hap.new"/></span>
+        <span class="btn btn-primary" style="float:left;margin-right:5px;"
+              onclick="editFunctionResources()"><i class="fa fa-edit" style="margin-right:3px;"></i><@spring.message "hap.edit"/></span>
+        <span class="btn btn-success k-grid-save-changes" style="float:left;margin-right:5px;"
+              data-bind="click:saveFunction"><i class="fa fa-save" style="margin-right:3px;"></i><@spring.message "hap.save"/></span>
+        <span class="btn btn-success" style="float:left;margin-right:5px;"
+              onclick="createNewUser()"><i class="fa fa-user-plus" style="margin-right:3px;"></i><@spring.message "employee.createnewuser"/></span>
+        <span onclick="deleteData()" class="btn btn-danger" style="float:left;"><i class="fa fa-trash-o" style="margin-right:3px;"></i><@spring.message "hap.delete"/></span>
+    </div>
+
+    <div class="pull-right" id="query-form" style="padding-bottom:10px;">
+        <input data-role="maskedtextbox" placeholder='<@spring.message "employee.employeeCode"/>' type="text"
+               style="float:left;width:150px;margin-right:5px;" data-bind="value:model.employeeCode" class="k-textbox">
+        <input data-role="maskedtextbox" placeholder='<@spring.message "employee.name"/>' type="text"
+               style="width: 150px;float:left;margin-right:5px;" data-bind="value:model.name" class="k-textbox">
+        <span class="btn btn-primary" style="float:left;width:70px" data-bind="click:queryFunction"
+              type="submit"><i class="fa fa-search" style="margin-right:3px;"></i><@spring.message "hap.query"/></span>
+        <div style="clear:both"></div>
+    </div>
+
+    <div style="clear:both">
+        <div id="grid"></div>
+    </div>
+</div>
+
+<div id="createUserWin" style="display: none">
+    <div id="page-content1" >
+        <form class="form-horizontal" >
+            <div class="col-sm-5" style="margin-top: 5px">
+                <div class="form-group">
+                    <label class="col-sm-3  control-label"
+                           style="text-align: right"><@spring.message "user.username"/></label>
+                    <div class="col-sm-7">
+                        <input id="userName" name="userName"
+                               validationMessage="该字段不能为空" type="text"
+                               data-bind="value:model.userName" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#userName'), userViewModel);</script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-5" style="margin-top: 5px">
+                <div class="form-group">
+                    <label class="col-xs-3  control-label"
+                           style="text-align: right"><@spring.message "user.status"/></label>
+
+                    <div class="col-xs-7">
+                        <input id="status" name="status"
+                               data-bind="value:model.status"
+                               style="width: 100%;">
+                    </div>
+                </div>
+            </div>
+
+           <div class="col-sm-5" style="margin-top: 5px">
+               <div class="form-group">
+                   <label class="col-sm-3  control-label"
+                          style="text-align: right"><@spring.message "user.email"/></label>
+
+                   <div class="col-sm-7">
+                       <input id="email" name="email" required
+                              validationMessage="该字段不能为空" type="text"
+                              data-bind="value:model.email" class="k-textbox"
+                              style="width: 100%;">
+                       <script>kendo.bind($('#email'), userViewModel);</script>
+                   </div>
+               </div>
+            </div>
+
+            <div class="col-xs-5" style="margin-top: 5px">
+                <div class="form-group">
+                    <label class="col-xs-3  control-label"
+                           style="text-align: right"><@spring.message "user.phone"/></label>
+
+                    <div class="col-xs-7">
+                        <input id="phone" name="phone" required
+                               validationMessage="该字段不能为空" type="text"
+                               data-bind="value:model.phone" class="k-textbox"
+                               style="width: 100%;">
+                        <script>kendo.bind($('#phone'), userViewModel);</script>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xs-5" style="margin-top: 5px">
+                <div class="form-group">
+                    <label class="col-sm-3 control-label"><@spring.message "user.startActiveDate"/></label>
+                    <div class="col-sm-7">
+                        <input id="startActiveDate" name="startActiveDate" data-role="datepicker"
+                               data-bind="enabled: isEnabled,value:model.startActiveDate" style="width: 100%"/>
+                        <span class="k-invalid-msg" data-for="datepicker"></span>
+                    </div>
+                    <script>
+                        kendo.bind($('#startActiveDate'), userViewModel);
+                    </script>
+                </div>
+            </div>
+
+            <div class="col-xs-5" style="margin-top: 5px">
+                <div class="form-group">
+                    <label class="col-sm-3 control-label"><@spring.message "user.endActiveDate"/></label>
+                    <div class="col-sm-7">
+                        <input id="endActiveDate" name="endActiveDate" data-role="datepicker"
+                               data-bind="enabled: isEnabled,value:model.endActiveDate" style="width: 100%"/>
+                        <span class="k-invalid-msg" data-for="datepicker"></span>
+                    </div>
+                    <script>
+                        kendo.bind($('#endActiveDate'), userViewModel);
+                    </script>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <div class="pull-left" id="toolbar-btn" style="padding-bottom:10px;">
+                <span class="btn btn-success" style="float:left;margin-right:5px;"
+                      onclick="openChooseRoleWin()"><@spring.message "user.allocationrole"/></span>
+            </div>
+
+    <div style="clear:both;">
+        <div id="userGrid" style="clear: both"></div>
+    </div>
+
+    <div class="col-xs-10" style="margin-top: 20px">
+        <div class="form-group">
+            <div class="col-xs-5" style="float:right">
+                        <span id="saveForm" class="btn btn-success k-grid-save-changes"
+                              style="float:center;margin-right:5px;"
+                              data-bind="click:saveFunction"><@spring.message "hap.save"/></span>
+                <script>kendo.bind($('#saveForm'), userViewModel);</script>
+            </div>
+        </div>
+    </div>
+</div>
+
+<<div id="chooseRole">
+    <div class="pull-left" id="toolbar-btn1" style="padding-bottom:10px;">
+        <span onclick="saveRole()" class="btn btn-primary k-grid-add" style="float:left;margin-right:5px;">保存</span>
+    </div>
+
+    <div class="pull-right" id="query-form-role" style="padding-bottom:10px;">
+        <input data-role="maskedtextbox" placeholder="<@spring.message "role.rolecode"/>" type="text" class="k-textbox"
+               type="text" style="float:left;width:150px;margin-right:5px;"
+               data-bind="value:model.roleCode"/>
+        <input data-role="maskedtextbox" placeholder="<@spring.message "role.rolename"/>" type="text" class="k-textbox"
+               type="text" style="float:left;width:150px;margin-right:5px;"
+               data-bind="value:model.roleName"/>
+        <span class="btn btn-primary" data-bind="click:queryResource"
+              type="submit"><@spring.message "hap.query"/></span>
+    </div>
+    <script>kendo.bind($('#query-form-role'), roleViewModel);</script>
+
+    <div style="clear:both;">
+        <div id="chooseGrid" style="clear: both"></div>
+    </div>
+</div>
+
+<script type="text/javascript">
+
+    kendo.bind($('#page-content'), viewModel);
+
+    $('#query-form input').keydown(function (e) {
+        if (e.keyCode == 13) {
+            e.target.blur();
+            viewModel.queryFunction(e);
+        }
+    });
+
+    var crudServiceBaseUrl = '${base.contextPath}',
+            dataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+                        url: crudServiceBaseUrl + "/hr/employee/query",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    create: {
+                        url: crudServiceBaseUrl + "/hr/employee/submit",
+                        contentType: "application/json",
+                        type: "POST"
+                    },
+                    update: {
+                        url: crudServiceBaseUrl + "/hr/employee/submit",
+                        contentType: "application/json",
+                        type: "POST"
+                    },
+                    destroy: {
+                        url: crudServiceBaseUrl + "/hr/employee/submit",
+                        contentType: "application/json",
+                        type: "POST"
+                    },
+                    parameterMap: function (options, type) {
+                        if (type !== "read" && options.models) {
+                            var datas = Hap.prepareSubmitParameter(options, type);
+                            return kendo.stringify(datas);
+                        } else if (type === "read") {
+                            return Hap.prepareQueryParameter(viewModel.model.toJSON(), options);
+                        }
+                    }
+                },
+                batch: true,
+                serverPaging: true,
+                serverSorting: true,
+                pageSize: 10,
+                schema: {
+                    data: 'rows',
+                    total: 'total',
+                    model: {
+                        id: "employeeId",
+                        fields: {
+                            enabledFlag: {defaultValue: 'Y', type: 'boolean', checkedValue: 'Y', uncheckedValue: 'N'},
+                            employeeCode: {type: "string"},
+                            name: {type: "string"},
+                            bornDate: {type: "date"},
+                            email: {type: "email"},
+                            mobil: {type: "string"},
+                            joinDate: {type: "date"}
+                        }
+                    }
+                }
+
+            });
+
+    //新建时调用的界面
+    window.editData = function () {
+        var url = 'employee_edit.html';
+        var dialog = $("#dialog").kendoWindow({
+            actions: ["Maximize", "Minimize", "Close"],
+            width: 900,
+            height: 500,
+            title: '<@spring.message "hap.edit"/>',
+            content: url,
+            iframe: true,
+            visible: false,
+            modal: true,
+            close: function () {
+                //window 关闭  刷新 本页面的  grid
+                $('#grid').data('kendoGrid').dataSource.page(1);
+            }
+        }).data("kendoWindow");
+        dialog.center().open();
+    };
+
+
+    //岗位分配弹窗
+    assignPosition = function (employeeId) {
+        var assignDialog = $("#assign-dialog").kendoWindow({
+            actions: ["Close"],
+            width: 900,
+            height: 400,
+            title: '<@spring.message "employee.positionallocation"/>',
+            visible: false,
+            iframe: true,
+            modal: true,
+            content: 'employee_assign.html?employeeId=' + employeeId,
+            close: function (e) {
+                $("#grid").data("kendoGrid").dataSource.page(1);
+            }
+        }).data("kendoWindow");
+        assignDialog.center().open();
+    };
+
+
+    var grid = $("#grid").kendoGrid({
+        dataSource: dataSource,
+        navigatable: false,
+        height: '100%',
+        resizable: true,
+        scrollable: true,
+        selectable: "multiple,rowbox",
+        pageable: {
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        sortable: true,
+        columns: [
+            {
+                field: "employeeCode",
+                title: '<@spring.message "employee.employeeCode"/>',
+                width: 80
+            },
+            {
+                field: "name",
+                title: '<@spring.message "employee.name"/>',
+                width: 80
+            },
+            {
+                field: "bornDate",
+                attributes: {style: "text-align:center"},
+                title: '<@spring.message "employee.borndate"/>',
+                width: 100,
+                headerAttributes: {
+                    "class": "table-header-cell",
+                    style: "text-align: center"
+                },
+                format: "{0:yyyy-MM-dd}"
+            },
+            {
+                field: "email",
+                title: '<@spring.message "user.email"/>',
+                width: 120
+            }, {
+                field: "mobil",
+                title: '<@spring.message "employee.mobile"/>',
+                width: 100
+            }, {
+                field: "joinDate",
+                attributes: {style: "text-align:center"},
+                title: '<@spring.message "employee.joindate"/>',
+                width: 100,
+                headerAttributes: {
+                    "class": "table-header-cell",
+                    style: "text-align: center"
+                },
+                format: "{0:yyyy-MM-dd}"
+            }, {
+                field: "gender",
+                title: '<@spring.message "employee.gender"/>',
+                width: 50,
+                template: function (dataItem) {
+                    var v = dataItem.gender;
+                    $.each(employeeGenderData, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                dataTextField: "meaning",
+                                dataValueField: "value",
+                                valuePrimitive: true,
+                                dataSource: employeeGenderData
+                            });
+                }
+            }, {
+                field: "certificateId",
+                title: '<@spring.message "employee.certificateid"/>',
+                width: 100
+            }, {
+                field: "status",
+                title: '<@spring.message "employee.status"/>',
+                width: 50,
+                template: function (dataItem) {
+                    var v = dataItem.status;
+                    $.each(employeeStatusData, function (i, n) {
+                        if ((n.value || '').toLowerCase() == (v || '').toLowerCase()) {
+                            v = n.meaning;
+                            return v;
+                        }
+                    })
+                    return v;
+                },
+                editor: function (container, options) {
+                    $('<input name="' + options.field + '"/>')
+                            .appendTo(container)
+                            .kendoDropDownList({
+                                dataTextField: "meaning",
+                                dataValueField: "value",
+                                valuePrimitive: true,
+                                dataSource: employeeStatusData
+                            });
+                }
+            }, {
+                field: "enabledFlag",
+                title: '<@spring.message "employee.enabledflag"/>',
+                attributes: {style: "text-align:center"},
+                width: 80
+            },
+            {	//岗位分配编辑
+                title: '<@spring.message "employee.positionallocation"/>',
+                width: 80,
+                template: function (rowdata) {
+                    if (!!rowdata.employeeId) {
+                        return '<a href="javascript:void(0);" onclick="assignPosition(' + rowdata.employeeId + ')"><@spring.message "employee.positionallocation"/></a>'
+                    }
+                    return '';
+                },
+                attributes: {style: "text-align:center"},
+                headerAttributes: {style: "text-align:center"}
+
+            }
+        ],
+        editable: false
+    }).data("kendoGrid");
+
+   var userStatus= $("#status").kendoDropDownList({
+        dataSource: [
+            { Name: "有效", Id: "ACTV" },
+            { Name: "过期", Id: "EXPR" },
+            { Name: "已锁定", Id: "LOCK" }
+        ],
+        dataTextField: "Name",
+        dataValueField: "Id"
+    }).data("kendoDropDownList");
+
+    function editFunctionResources() {
+        var checked = grid.selectedDataItems();
+        if (checked.length == 1) {
+            var dialog = $("#dialog").kendoWindow({
+                actions: ["Close"],
+                width: 900,
+                height: 500,
+                title: '<@spring.message "hap.edit"/>',
+                visible: false,
+                iframe: true,
+                modal: true,
+                content: 'employee_edit.html?employeeId=' + checked[0].employeeId,
+                close: function (e) {
+                    $("#grid").data("kendoGrid").dataSource.page(1);
+                }
+            }).data("kendoWindow");
+            dialog.center().open();
+        } else {
+            kendo.ui.showInfoDialog({
+                message: $l('hap.tip.selectrow')
+            })
+        }
+    }
+
+
+    function createNewUser() {
+        var checked = grid.selectedDataItems();
+        if (checked.length == 1) {
+            userViewModel.model.set("userName", checked[0].employeeCode);
+            userViewModel.model.set("email", checked[0].email);
+            userViewModel.model.set("phone", checked[0].mobil);
+           // userViewModel.model.set("status", "ACTV");
+            openUserWin();
+        } else {
+            kendo.ui.showInfoDialog({
+                message: $l('hap.tip.selectrow')
+            })
+        }
+    }
+
+    $("#createUserWin").kendoWindow({
+        actions: ["Close"],
+        title: $l('新建用户'),
+        draggable: true,
+        height: "430px",
+        width: "900px",
+        resizable: false,
+        modal:true,
+        //初始化时设置为隐藏状态
+        visible: false,
+        close: onClose
+    });
+
+   function onClose() {
+        //userViewModel 清空
+        userStatus.value("ACTV");
+        var formData = userViewModel.model.toJSON();
+        for (var k in formData) {
+            userViewModel.model.set(k, null);
+        }
+        cleanRole();
+    }
+    function cleanRole() {
+        var formData = userViewModel.role.toJSON();
+        for (var k in formData) {
+            userViewModel.role.set(k, null);
+        }
+    }
+
+    function openUserWin() {
+        var win = $("#createUserWin").data("kendoWindow");
+        win.center().open();
+        $("#userGrid").data("kendoGrid").dataSource.data([]);
+        //Hap.autoResizeGrid("#userGrid");
+    }
+
+    function saveRole() {
+        var selection = $('#chooseGrid').data('kendoGrid').selectedDataItems();
+ //       var users = [];
+     //   var userGridDatas=[];
+        for (var i = 0; i < selection.length; i++) {
+/*           var userRole = {};
+            userRole["roleId"] = selection[i].roleId;
+            users[i] = userRole;*/
+            if($("#userGrid").data("kendoGrid").dataSource.data().length==0){
+                var userGridData={};
+                userGridData["roleCode"]=selection[i].roleCode;
+                userGridData["roleName"]=selection[i].roleName;
+                userGridData["roleId"]=selection[i].roleId;
+                //  userGridDatas[i]=userGridData;
+                $("#userGrid").data("kendoGrid").dataSource.add(userGridData);
+            }else{
+            for(var j=0;j<$("#userGrid").data("kendoGrid").dataSource.data().length;j++){
+                if($("#userGrid").data("kendoGrid").dataSource.data()[j].roleId!=selection[i].roleId){
+                    var userGridData={};
+                    userGridData["roleCode"]=selection[i].roleCode;
+                    userGridData["roleName"]=selection[i].roleName;
+                    userGridData["roleId"]=selection[i].roleId;
+                    //  userGridDatas[i]=userGridData;
+                    $("#userGrid").data("kendoGrid").dataSource.add(userGridData);
+                }
+            }
+            }
+        }
+
+        //userViewModel.role.set("userRole", users);
+        $("#chooseRole").data("kendoWindow").close();
+    }
+
+    $("#chooseRole").kendoWindow({
+        actions: ["Close"],
+        title: $l('<@spring.message "user.allocationrole"/>'),
+        draggable: true,
+        width: 700,
+        height: 350,
+        resizable: false,
+        //初始化时设置为隐藏状态
+        visible: false,
+        close: refreshRoleGrid
+    });
+
+    function refreshRoleGrid() {
+        $("#chooseGrid").data('kendoGrid').dataSource.page(1);
+    }
+
+   function openChooseRoleWin() {
+        var win = $("#chooseRole").data("kendoWindow");
+        win.center().open();
+        Hap.autoResizeGrid("#chooseGrid");
+    }
+
+    var modalUrl = "${base.contextPath}/sys/role",
+
+            modalDataSource = new kendo.data.DataSource({
+                transport: {
+                    read: {
+
+                        url: modalUrl + "/queryRoleNotUserRole",
+                        type: "POST",
+                        dataType: "json"
+                    },
+                    parameterMap: function (options, type) {
+                        if (type !== "read" && options.models) {
+                            var datas = Hap.prepareSubmitParameter(options, type);
+                            return kendo.stringify(datas);
+                        } else if (type === "read") {
+                            return Hap.prepareQueryParameter(roleViewModel.model.toJSON(), options);
+                        }
+                    }
+                },
+                batch: true,
+                serverPaging: true,
+                pageSize: 10,
+                schema: {
+                    data: 'rows',
+                    total: 'total',
+                    model: {
+                        //如果想动态的添加，需要这边加上唯一标识
+                        id: "roleId"
+                    }
+                }
+            });
+    $("#chooseGrid").kendoGrid({
+        dataSource: modalDataSource,
+        navigatable: false,
+        height: '100%',
+        resizable: true,
+        scrollable: true,
+        selectable: 'multiple, rowbox',
+        pageable: {
+            //可以选择一个页面多少条数据
+            pageSizes: [5, 10, 20, 50],
+            refresh: true,
+            buttonCount: 5
+        },
+        columns: [
+            {
+                field: "roleCode",
+                title: '<@spring.message "role.rolecode"/>',
+                width: 80
+            },
+            {
+                field: "roleName",
+                title: '<@spring.message "role.rolename"/>',
+                width: 200,
+            },
+            {
+                field: "roleDescription",
+                title: '<@spring.message "role.roledescription"/>',
+                width: 200,
+            },
+
+        ],
+        editable: false,
+        dataBound: function () {
+            var view = this.dataSource.view();
+            this.items().each(function (index, row) {
+                kendo.bind(row, view[index]);
+            });
+        }
+
+    }).data("kendoGrid")
+
+    function deleteDataSource(e) {
+        var grid = $("#userGrid").data("kendoGrid");
+        grid.dataSource.remove(grid.dataSource.get(e));
+    }
+
+    $("#userGrid").kendoGrid({
+        dataSource: {
+            data: {},
+            schema: {
+                data: "data",
+                total: "total",
+                model: {
+                    id: "roleId",
+                }
+            }
+        },
+        navigatable: false,
+        height: '200px',
+        resizable: true,
+        scrollable: true,
+        pageable: {
+            //可以选择一个页面多少条数据
+            refresh: true
+        },
+        columns: [
+            {
+                field: "roleCode",
+                title: '<@spring.message "role.rolecode"/>',
+                width: 80
+            },
+            {
+                field: "roleName",
+                title: '<@spring.message "role.rolename"/>',
+                width: 200,
+            },
+            {
+                title: '<@spring.message "hap.delete"/>',
+                width:200,
+                template:function(dataItem){ return '<span  onclick="deleteDataSource('+dataItem.roleId+')" class="btn btn-danger"><@spring.message "hap.delete"/></span>'}
+            }
+
+        ],
+        editable: false,
+        dataBound: function () {
+            var view = this.dataSource.view();
+            this.items().each(function (index, row) {
+                kendo.bind(row, view[index]);
+            });
+        }
+
+    }).data("kendoGrid");
+
+
+
+
+    //自动根据当前屏幕大小调整表格
+    Hap.autoResizeGrid("#grid");
+
+
+</script>
+
+
+</body>
+</html>

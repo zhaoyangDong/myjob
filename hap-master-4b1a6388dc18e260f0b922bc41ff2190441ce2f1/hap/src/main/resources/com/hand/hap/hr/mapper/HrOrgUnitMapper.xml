@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hand.hap.hr.mapper.OrgUnitMapper">
+
+    <resultMap id="BaseResultMap" type="com.hand.hap.hr.dto.HrOrgUnit" extends="com.hand.hap.mapper.StdMapper.STD">
+        <id column="unit_id" property="unitId"/>
+        <result column="unit_code" property="unitCode"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="parent_name" property="parentName"/>
+        <result column="name" property="name"/>
+        <result column="description" property="description"/>
+        <result column="manager_position" property="managerPosition"/>
+        <result column="position_name" property="positionName"/>
+        <result column="company_id" property="companyId"/>
+        <result column="company_name" property="companyName"/>
+        <result column="enabled_flag" property="enabledFlag"/>
+    </resultMap>
+
+    <select id="queryUnits" parameterType="com.hand.hap.hr.dto.HrOrgUnit" resultMap="BaseResultMap">
+        select unb.UNIT_ID, unb.UNIT_CODE,unb.PARENT_ID,unt.NAME,unb.DESCRIPTION,unb.ENABLED_FLAG,unb.MANAGER_POSITION,unb.company_id
+        ,(select unt2.NAME from hr_org_unit_b unb2 LEFT JOIN hr_org_unit_tl unt2
+        on ( unb2.UNIT_ID=unt2.UNIT_ID and unt2.lang=#{request.locale,jdbcType=VARCHAR})
+        where unb2.UNIT_ID=unb.PARENT_ID) parent_name,
+        (select pot.NAME from hr_org_position_b pob LEFT JOIN hr_org_position_tl pot
+        on (pob.POSITION_ID=pot.POSITION_ID and pot.lang=#{request.locale,jdbcType=VARCHAR})
+        where unb.MANAGER_POSITION=pob.POSITION_ID) position_name,
+        (SELECT comt.company_full_name from fnd_company_b comb left JOIN fnd_company_tl comt
+        on(comb.company_id=comt.company_id and comt.lang=#{request.locale,jdbcType=VARCHAR})
+        where unb.company_id=comb.company_id) company_name
+        from hr_org_unit_b unb LEFT OUTER JOIN hr_org_unit_tl unt
+        ON (unb.unit_id = unt.unit_id AND unt.lang =#{request.locale,jdbcType=VARCHAR})
+        <where>
+            <if test="unitId!=null">
+                and unb.unit_id=#{unitId}
+            </if>
+            <if test="unitCode!=null">
+                and unb.unit_code LIKE concat('%', concat(#{unitCode,jdbcType=VARCHAR}, '%'))
+            </if>
+            <if test="parentId!=null">
+                and unb.parent_id=#{parentId}
+            </if>
+            <if test="name!=null">
+                and unt.name LIKE concat('%', concat(#{name,jdbcType=VARCHAR}, '%'))
+            </if>
+            <if test="description!=null">
+                and unb.description LIKE concat('%', concat(#{description,jdbcType=VARCHAR}, '%'))
+            </if>
+            <if test="managerPosition!=null">
+                and manager_position =#{managerPosition}
+            </if>
+            <if test="companyId!=null">
+                and company_id =#{companyId}
+            </if>
+        </where>
+        <if test="sortname !=null">
+            <bind name="_colName" value="@com.hand.hap.mybatis.util.OGNL@unCamel(sortname)"/>
+            order by unb.${_colName} ${sortorder}
+        </if>
+        <if test="sortname ==null">
+            order by unb.unit_id asc
+        </if>
+
+    </select>
+
+</mapper>

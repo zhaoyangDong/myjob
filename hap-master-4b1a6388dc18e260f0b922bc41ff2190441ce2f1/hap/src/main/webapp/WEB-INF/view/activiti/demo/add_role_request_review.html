@@ -1,0 +1,46 @@
+<html>
+<head></head>
+<body style="padding: 10px;">
+
+<form id="reviewRoleForm"></form>
+
+
+<script type="text/javascript">
+
+    $(function () {
+
+        window['reviewRoleForm'] = $("#reviewRoleForm").ligerForm({
+            fields    : [
+                {
+                    label   : '角色名',
+                    name    : 'roleName',
+                    readonly:true
+                },
+                {
+                    label   : '角色代码',
+                    name    : 'roleCode',
+                    readonly:true
+                },
+                {
+                    label: '角色描述',
+                    name : 'roleDescription',
+                    readonly:true
+                }
+            ]
+        });
+
+	    $.ajax({
+		    url:'${base.contextPath}/sys/role/query?roleId=${RequestParameters.businessKey}',
+		    type:'POST',
+		    success:function(args){
+			    if(args.success){
+                    reviewRoleForm.setData(args.rows[0])
+			    }
+		    }
+	    });
+
+
+    })
+</script>
+</body>
+</html>
