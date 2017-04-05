@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+
+ PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.ssm.mapper.Filmapper">
+
+  <resultMap id="mySet"  type="cn.ssm.dto.Film" >
+        <result column="film_id" property="filmId" jdbcType="DECIMAL"/>
+        <result column="title" property="title" jdbcType="VARCHAR"/>
+        <result column="description" property="description" jdbcType="VARCHAR"/>
+        <result column="release_year" property="releaseYear" jdbcType="VARCHAR"/>
+        <result column="language_id" property="languageId" jdbcType="DECIMAL"/>
+        <result column="original_language_id" property="originalLanguageId" jdbcType="DECIMAL"/>
+        <result column="rental_duration" property="rentalDuration" jdbcType="DECIMAL"/>        
+        <result column="rental_rate" property="rentalRate" jdbcType="DECIMAL"/>
+        <result column="length" property="length" jdbcType="DECIMAL"/>
+        <result column="replacement_cost" property="replacementCost" jdbcType="DECIMAL"/>
+        <result column="rating" property="rating" jdbcType="VARCHAR"/>        
+        <result column="special_features" property="specialFeatures" jdbcType="VARCHAR"/>
+        <result column="last_update" property="lastUpdate" jdbcType="VARCHAR"/>
+        </resultMap>
+
+
+
+
+         <select id="select" parameterType="int" resultMap="mySet">
+           SELECT * FROM film ORDER BY  film_id DESC LIMIT #{q},10
+         </select>
+         <!-- 查询一共多少行 -->
+           <select id="selectall" resultType="int">
+          SELECT COUNT(*) FROM film
+        </select>
+       
+       <insert id="insertfilm" parameterType="cn.ssm.dto.Film" >
+             insert into film(title,description,language_id) values(#{title},#{description},#{languageId})
+         </insert>
+        
+           <select id="findcustomer" parameterType="String" resultType="cn.ssm.dto.customer">
+          SELECT * FROM customer where first_name=#{username}
+        </select>
+        
+        
+        <resultMap id="mySet2"  type="cn.ssm.dto.customer" >
+        <result column="customer_id" property="customerId" jdbcType="DECIMAL"/>
+        <result column="store_id" property="storeId" jdbcType="DECIMAL"/>
+        <result column="first_name" property="firstName" jdbcType="VARCHAR"/>
+        <result column="last_name" property="lastName" jdbcType="VARCHAR"/>
+        <result column="email" property="email" jdbcType="VARCHAR"/>
+        <result column="address_id" property="addressId" jdbcType="DECIMAL"/>
+        <result column="active" property="active" jdbcType="VARCHAR"/>        
+        <result column="create_date" property="createDate" jdbcType="VARCHAR"/>
+        <result column="last_update" property="lastUpdate" jdbcType="VARCHAR"/>
+        <result column="address" property="address" jdbcType="VARCHAR"/>
+
+        </resultMap>
+        
+        <!-- 查询所有用户 -->
+         <select id="findallcustomer" parameterType="int" resultMap="mySet2">
+         SELECT customer.* ,address.address FROM customer,address WHERE customer.address_id=address.address_id ORDER BY customer_id LIMIT #{a},15 
+        </select>
+        
+          <!-- 查询customer一共多少行 -->
+           <select id="selectcustomercount" resultType="int">
+          SELECT COUNT(*) FROM customer
+        </select>
+        
+        <!-- 查询address -->
+         <select id="findaddress" resultMap="mySet2">
+               SELECT customer.* ,address.address FROM customer,address WHERE customer.address_id=address.address_id 
+        </select>
+        
+         <!-- 查询address查找address_id -->
+         <select id="findaddressid" parameterType="String" resultType="String">
+               SELECT address_id FROM address WHERE address=#{address} 
+        </select>
+      
+        <!-- 增加customer表的用户 -->
+        <insert id="insertcustomer" parameterType="cn.ssm.dto.customer">
+      INSERT INTO customer(store_id,first_name,last_name,email,address_id,create_date)
+       VALUES(#{storeId},#{firstName},#{lastName},#{email},#{addressId},#{createDate})
+       </insert>
+       
+        <!-- 删除customer表的用户 -->
+       <delete id="deletecustomer" parameterType="int">
+       SET FOREIGN_KEY_CHECKS=0;
+       DELETE FROM customer WHERE customer_id=#{id};
+       SET FOREIGN_KEY_CHECKS=1;
+       </delete>
+       
+       <!-- 更新customer表的用户 -->
+       <update id="updatecustomer" parameterType="cn.ssm.dto.customer">
+       UPDATE customer SET first_name=#{firstName},last_name=#{lastName},email=#{email},
+       address_id=#{addressId} WHERE customer_id=#{customerId}
+       </update>
+
+</mapper>
